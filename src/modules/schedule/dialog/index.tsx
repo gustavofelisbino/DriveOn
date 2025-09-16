@@ -11,8 +11,8 @@ import {
   Chip,
   Divider,
   Dialog, DialogTitle, DialogContent, DialogActions,
+  Grid // <-- importante
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
@@ -105,7 +105,7 @@ function NewAppointmentDialog({
               <TextField
                 {...field}
                 label="Título"
-                placeholder="Ex.: Avaliação física - Maria"
+                placeholder="Ex.: Troca de vela - Gustavo"
                 autoFocus
                 error={!!errors.title}
                 helperText={errors.title?.message}
@@ -122,7 +122,7 @@ function NewAppointmentDialog({
               <TextField
                 {...field}
                 label="Descrição"
-                placeholder="Anotações, observações, objetivos…"
+                placeholder="Anotações, observações, etc..."
                 multiline
                 minRows={3}
                 error={!!errors.description}
@@ -149,6 +149,7 @@ function NewAppointmentDialog({
                         helperText: errors.start?.message,
                         fullWidth: true,
                       },
+                      popper: { placement: 'bottom-start' },
                     }}
                   />
                 )}
@@ -161,7 +162,7 @@ function NewAppointmentDialog({
                 rules={{
                   required: 'Informe a data/hora de término',
                   validate: (value) =>
-                    value && start && dayjs(value).isAfter(start ?? dayjs())
+                    value && start && dayjs(value).isAfter(start)
                       ? true
                       : 'Término deve ser depois do início',
                 }}
@@ -177,6 +178,7 @@ function NewAppointmentDialog({
                         helperText: errors.end?.message,
                         fullWidth: true,
                       },
+                      popper: { placement: 'bottom-start' },
                     }}
                   />
                 )}
@@ -212,8 +214,9 @@ function NewAppointmentDialog({
   );
 }
 
+// ---------- Dia customizado (estável e alinhado) ----------
 function EventDay(
-  props: Omit<PickersDayProps, 'day'> & { day: Dayjs; highlights?: HighlightMap }
+  props: PickersDayProps & { highlights?: HighlightMap }
 ) {
   const { day, outsideCurrentMonth, highlights = {}, selected, ...other } = props;
   const key = day.format('YYYY-MM-DD');
@@ -229,19 +232,23 @@ function EventDay(
       disableMargin
       sx={(theme) => ({
         boxSizing: 'border-box',
-        width: '100%',
-        maxWidth: 'unset',
-        aspectRatio: '1',
+        width: 44,
+        height: 44,
         lineHeight: 1,
         fontWeight: 600,
+        mx: 0,
         borderRadius: 8,
         position: 'relative',
-        transition: 'transform .12s ease',
-        '&:hover': { transform: 'scale(1.02)' },
 
+        // sem scale pra não “pular”
+        '&:hover': { backgroundColor: 'action.hover' },
+
+        // Hoje: anel interno (não muda tamanho)
         ...(day.isSame(dayjs(), 'day') && {
           boxShadow: `inset 0 0 0 2px ${theme.palette.primary.main}`,
         }),
+
+        // Selecionado
         ...(selected && {
           bgcolor: 'primary.main',
           color: '#fff',
@@ -249,6 +256,7 @@ function EventDay(
           boxShadow: 'none',
         }),
 
+        // Pontinho de evento
         ...(isHighlighted && {
           '&::after': {
             content: '""',
@@ -267,10 +275,13 @@ function EventDay(
   );
 }
 
+// ---------- Schedule ----------
 export default function Schedule() {
   const [value, setValue] = useState<Dayjs | null>(dayjs());
   const [query, setQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // exemplo: mapa de destaques
   const highlights = useMemo<HighlightMap>(() => {
     const base = [6, 8, 20, 25];
     const map: HighlightMap = {};
@@ -282,6 +293,7 @@ export default function Schedule() {
   }, []);
 
   const handleCreate = (data: FormValues) => {
+    // Integração com sua API/estado
     console.log('Novo agendamento:', {
       ...data,
       startISO: data.start?.toISOString(),
@@ -297,9 +309,9 @@ export default function Schedule() {
           mx: 'auto',
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 2, sm: 3 },
-          mt: 2,
         }}
       >
+        {/* Header */}
         <Stack direction="row" alignItems="center" spacing={1} mb={1}>
           <EventNoteRoundedIcon fontSize="small" />
           <Typography variant="h6" fontWeight={700}>
@@ -310,6 +322,7 @@ export default function Schedule() {
           {value ? value.format('dddd, DD [de] MMMM [de] YYYY') : 'Selecione uma data'}
         </Typography>
 
+        {/* Ações */}
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
@@ -378,22 +391,9 @@ export default function Schedule() {
               width: '100%',
               '& .MuiPickersCalendarHeader-root': { px: 1 },
               '& .MuiPickersCalendarHeader-label': { fontWeight: 800, fontSize: 16 },
-              '& .MuiDayCalendar-weekDayLabel': {
-                color: 'text.secondary',
-                fontWeight: 600,
-                flexBasis: 'calc(100% / 7)',
-                maxWidth: 'calc(100% / 7)',
-                textAlign: 'center',
-              },
+              '& .MuiDayCalendar-weekDayLabel': { color: 'text.secondary', fontWeight: 600 },
               '& .MuiDayCalendar-monthContainer': { pt: 1 },
               '& .MuiPickersSlideTransition-root': { minHeight: 320 },
-
-              '& .MuiDayCalendar-weekContainer': {
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                columnGap: 0,
-                rowGap: 0,
-              },
               '& .MuiPickersArrowSwitcher-root': {
                 gap: 1.5,
                 '& button': {
@@ -412,7 +412,7 @@ export default function Schedule() {
               rightArrowIcon: ArrowForwardRoundedIcon,
             }}
             slotProps={{
-              day: { disableMargin: true },
+              day: { disableMargin: true } as Partial<PickersDayProps>,
             }}
           />
         </Paper>

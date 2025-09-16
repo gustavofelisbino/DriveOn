@@ -1,5 +1,4 @@
-import { Box, Toolbar, IconButton } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Box, Toolbar } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import AppSidebar from '../components/layout/AppSidebar';
 import AppTopbar from '../components/layout/AppTopbar';
@@ -10,14 +9,8 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
       <AppTopbar drawerWidth={drawerWidth} />
-      <IconButton
-        onClick={() => setMobileOpen(true)}
-        sx={{ position: 'fixed', top: 18, left: 12, display: { md: 'none' } }}
-      >
-        <MenuIcon />
-      </IconButton>
 
       <AppSidebar
         drawerWidth={drawerWidth}
@@ -25,8 +18,17 @@ export default function AppLayout() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-        <Toolbar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          ml: { md: `${drawerWidth}px` },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          px: { xs: 2, sm: 3, md: 4 },
+          pb: 4,
+        }}
+      >
+        <Toolbar sx={{ minHeight: 72 }} />
         <Outlet />
       </Box>
     </Box>

@@ -51,8 +51,7 @@ export default function Login() {
         </Paper>
       </Box>
 
-      {/* lado direito: imagem ilustrativa */}
-      <Box sx={{ display: { xs: 'none', md: 'block' }, background: 'url(/mechanic.jpg) center/cover no-repeat' }} />
+      <Box component="img" sx={{ display: { xs: 'none', md: 'block' }, backgroundSize: 'cover', src: "https://imgur.com/a/395qdN5" }} />
     </Box>
   );
 }

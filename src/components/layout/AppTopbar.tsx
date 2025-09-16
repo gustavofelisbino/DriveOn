@@ -14,12 +14,16 @@ import {
         sx={{
           width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           ml: { xs: 0, md: `${drawerWidth}px` },
-          borderBottom: '1px solid #eee',
-          bgcolor: 'background.default',
+          mt: 1,
         }}
-      >      
+      >
         <Toolbar sx={{ minHeight: 72, px: 3 }}>
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', px: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
+              <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 500 }}>Olá Gustavo</Typography>
+              <Typography variant="body2" sx={{ textAlign: 'left', color: 'text.secondary', fontWeight: 300 }}>Bom dia!</Typography>
+            </Box>
+            <Box sx={{ flex: 1 }} />
             <Paper
               variant="outlined"
               sx={{
@@ -28,7 +32,6 @@ import {
                 width: { xs: '100%', sm: 420, md: 520 },
                 height: 48,
                 borderRadius: '24px',
-                bgcolor: '#fff',
               }}
             >
               <SearchIcon sx={{ ml: 1.5 }} />

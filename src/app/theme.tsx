@@ -5,7 +5,7 @@ export const theme = createTheme({
     mode: 'light',
     primary: { main: '#7A4BFF' },   // roxo do mock
     secondary: { main: '#6C6C79' },
-    background: { default: '#F7F7FB', paper: '#FFFFFF' },
+    background: { default: '#ffffff', paper: '#ffffff' },
     text: { primary: '#1E1E2D', secondary: '#6C6C79' },
   },
   shape: { borderRadius: 12 },

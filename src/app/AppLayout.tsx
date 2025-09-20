@@ -1,36 +1,1 @@
-import { Box, Toolbar } from '@mui/material';
-import { Outlet } from 'react-router-dom';
-import AppSidebar from '../components/layout/AppSidebar';
-import AppTopbar from '../components/layout/AppTopbar';
-import { useState } from 'react';
-
-export default function AppLayout() {
-  const drawerWidth = 240;
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
-      <AppTopbar drawerWidth={drawerWidth} />
-
-      <AppSidebar
-        drawerWidth={drawerWidth}
-        mobileOpen={mobileOpen}
-        onCloseMobile={() => setMobileOpen(false)}
-      />
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          ml: { md: `${drawerWidth}px` },
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          px: { xs: 2, sm: 3, md: 4 },
-          pb: 4,
-        }}
-      >
-        <Toolbar sx={{ minHeight: 72 }} />
-        <Outlet />
-      </Box>
-    </Box>
-  );
-}
+import { Box, Toolbar } from '@mui/material';import { Outlet } from 'react-router-dom';import AppSidebar from '../components/layout/AppSidebar';import AppTopbar from '../components/layout/AppTopbar';import { useState } from 'react';export default function AppLayout() {  const drawerWidth = 240;  const [mobileOpen, setMobileOpen] = useState(false);  return (    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>      <AppTopbar drawerWidth={drawerWidth} />      <AppSidebar        drawerWidth={drawerWidth}        mobileOpen={mobileOpen}        onCloseMobile={() => setMobileOpen(false)}      />      <Box        component="main"        sx={{          flexGrow: 1,          ml: { md: `${drawerWidth}px` },          width: { md: `calc(100% - ${drawerWidth}px)` },          px: { xs: 2, sm: 3, md: 4 },          pb: 4,        }}      >        <Toolbar sx={{ minHeight: 72 }} />        <Outlet />      </Box>    </Box>  );}

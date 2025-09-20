@@ -1,29 +1,1 @@
-import { createContext, useContext, useState } from 'react';
-import type { User } from './types';
-import * as api from './services';
-
-type AuthCtx = {
-  user: User | null;
-  signIn: (email: string, password: string, remember?: boolean) => Promise<void>;
-  signOut: () => Promise<void>;
-};
-
-const Ctx = createContext<AuthCtx | null>(null);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  const signIn = async (email: string, password: string) => {
-    const u = await api.login({ email, password });
-    setUser(u);
-  };
-  const signOut = async () => { await api.logout(); setUser(null); };
-
-  return <Ctx.Provider value={{ user, signIn, signOut }}>{children}</Ctx.Provider>;
-}
-
-export const useAuth = () => {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
-  return ctx;
-};
+import { createContext, useContext, useState } from 'react';import type { User } from './types';import * as api from './services';type AuthCtx = {  user: User | null;  signIn: (email: string, password: string, remember?: boolean) => Promise<void>;  signOut: () => Promise<void>;};const Ctx = createContext<AuthCtx | null>(null);export function AuthProvider({ children }: { children: React.ReactNode }) {  const [user, setUser] = useState<User | null>(null);  const signIn = async (email: string, password: string) => {    const u = await api.login({ email, password });    setUser(u);  };  const signOut = async () => { await api.logout(); setUser(null); };  return <Ctx.Provider value={{ user, signIn, signOut }}>{children}</Ctx.Provider>;}export const useAuth = () => {  const ctx = useContext(Ctx);  if (!ctx) throw new Error('useAuth must be inside AuthProvider');  return ctx;};

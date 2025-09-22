@@ -1,34 +1,15 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useContext, useMemo, useState } from "react";
 import api from "../api/client";
 
-type User = {
-  usuarioId: number;
-  nome: string;
-  cargo: string;
-  empresaId: number;
-};
-
-type MultipleCompaniesError = {
-  code: "MULTIPLE_COMPANIES";
-  empresas: { id: number; nome: string }[];
-};
+type User = { usuarioId: number; nome: string; cargo: string; empresaId: number; };
+type MultipleCompaniesError = { code: "MULTIPLE_COMPANIES"; empresas: { id: number; nome: string }[] };
 
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  signIn: (
-    email: string,
-    password: string,
-    remember: boolean
-  ) => Promise<void | MultipleCompaniesError>;
-  signInWithCompany: (
-    email: string,
-    password: string,
-    empresaId: number,
-    remember: boolean
-  ) => Promise<void>;
+  signIn: (email: string, password: string, remember: boolean) => Promise<void | MultipleCompaniesError>;
+  signInWithCompany: (email: string, password: string, empresaId: number, remember: boolean) => Promise<void>;
   signOut: () => void;
 };
 
@@ -55,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await api.post(
       "/api/auth/login-email",
       { email, password },
-      { validateStatus: s => (s >= 200 && s < 300) || s === 409 } // aceita 409
+      { validateStatus: s => (s >= 200 && s < 300) || s === 409 }
     );
 
     if (res.status === 200 && res.data?.token) {
@@ -65,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (res.status === 409 && res.data?.code === "MULTIPLE_COMPANIES") {
-      return { code: "MULTIPLE_COMPANIES", empresas: res.data.empresas } as MultipleCompaniesError;
+      return { code: "MULTIPLE_COMPANIES", empresas: res.data.empresas };
     }
 
     throw new Error(typeof res.data === "string" ? res.data : "E-mail ou senha inválidos.");
@@ -86,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const value = useMemo<AuthContextType>(() => ({
+  const value = useMemo(() => ({
     user, token, isAuthenticated: !!token, signIn, signInWithCompany, signOut
   }), [user, token]);
 

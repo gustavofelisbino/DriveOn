@@ -1,33 +1,36 @@
-import { api } from "../lib/api";
+import api from '../api/client';
 import type {
-    OrdemServicoCriarDto,
-    OrdemServicoDetalhe,
-    OrdemServicoListaDto,
-} from "../types/ordemservico";
+  TaskListDto, TaskDetalhe, TaskCreateDto, TaskUpdateDto, TaskStatus
+} from '../types/tarefa';
 
-export async function listarOrdens(params?: {
-  status?: "aberta" | "finalizada" | "cancelada";
-  clienteId?: number;
-  veiculoId?: number;
+export async function listarTarefas(params?: {
+  status?: TaskStatus | 'todas';
+  q?: string;
+  due?: 'overdue' | 'today' | 'week' | 'month';
 }) {
-  const { data } = await api.get<OrdemServicoListaDto[]>("/api/ordens-servico", { params });
+  const { data } = await api.get<TaskListDto[]>('/api/tarefas', { params });
   return data;
 }
 
-export async function obterOrdem(id: number) {
-  const { data } = await api.get<OrdemServicoDetalhe>(`/api/ordens-servico/${id}`);
+export async function obterTarefa(id: number) {
+  const { data } = await api.get<TaskDetalhe>(`/api/os/${id}`);
   return data;
 }
 
-export async function criarOrdem(dto: OrdemServicoCriarDto) {
-  const { data } = await api.post("/api/ordens-servico", dto);
-  return data; // OrdemServico criada
+export async function criarTarefa(dto: TaskCreateDto) {
+  const { data } = await api.post<TaskDetalhe>('/api/os', dto);
+  return data;
 }
 
-export async function finalizarOrdem(id: number) {
-  await api.put(`/api/ordens-servico/${id}/finalizar`);
+export async function atualizarTarefa(id: number, dto: TaskUpdateDto) {
+  const { data } = await api.put<TaskDetalhe>(`/api/os/${id}`, dto);
+  return data;
 }
 
-export async function excluirOrdem(id: number) {
-  await api.delete(`/api/ordens-servico/${id}`);
+export async function concluirTarefa(id: number) {
+  await api.post<void>(`/api/os/${id}/concluir`, {});
+}
+
+export async function excluirTarefa(id: number) {
+  await api.delete<void>(`/api/os/${id}`);
 }

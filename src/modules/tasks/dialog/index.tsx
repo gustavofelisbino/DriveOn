@@ -1,258 +1,211 @@
-import * as React from "react";
+import * as React from 'react';
 import {
-  Dialog, DialogContent, DialogActions, Stack, TextField, Button, IconButton, Typography,
-  MenuItem, InputAdornment, Paper, Divider, Table, TableHead, TableRow, TableCell, TableBody, Chip
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import AddTaskRoundedIcon from "@mui/icons-material/AddTaskRounded";
-import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
-import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
-import NotesRoundedIcon from "@mui/icons-material/NotesRounded";
-import type {
-  ItemOsDto, OrdemServicoCriarDto, OrdemServicoDetalhe, OsTipo
-} from '../../../types/ordemservico';
+  Dialog, DialogContent, DialogActions, DialogTitle,
+  Stack, TextField, Button, MenuItem, InputAdornment
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import type { TaskCreateDto, TaskDetalhe, TaskPriority, TaskStatus, TaskUpdateDto } from '../../../types/tarefa';
 
-const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-
-function HeaderIconWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <Stack sx={{
-      width: 36, height: 36, borderRadius: "50%", display: "grid", placeItems: "center",
-      bgcolor: (t) => alpha(t.palette.primary.main, 0.15), color: "primary.main", flexShrink: 0,
-    }}>
-      {children}
-    </Stack>
-  );
-}
+type Mode = 'create' | 'edit' | 'view';
 
 type Props = {
   open: boolean;
-  mode: "create" | "view";
-  detail?: OrdemServicoDetalhe | null;
+  mode: Mode;
+  detail?: TaskDetalhe | null;
   onClose: () => void;
-  onCreate?: (dto: OrdemServicoCriarDto) => Promise<void> | void;
-  onFinalize?: () => Promise<void> | void;
-  onDelete?: () => Promise<void> | void;
+  onCreate?: (dto: TaskCreateDto) => Promise<void> | void;
+  onUpdate?: (dto: TaskUpdateDto) => Promise<void> | void;
 };
 
-export default function OrderDialog({
-  open, mode, detail, onClose, onCreate, onFinalize, onDelete,
-}: Props) {
-  // --- estado de criação ---
-  const [tipo, setTipo] = React.useState<OsTipo>("servico");
-  const [clienteId, setClienteId] = React.useState<number | "">("");
-  const [veiculoId, setVeiculoId] = React.useState<number | "">("");
-  const [descricao, setDescricao] = React.useState("");
-  const [descontoValor, setDescontoValor] = React.useState<number | "">("");
-  const [itens, setItens] = React.useState<ItemOsDto[]>([
-    { descricao: "", quantidade: 1, precoUnitario: 0 },
-  ]);
+const prioridadeOptions: TaskPriority[] = ['baixa', 'media', 'alta'];
+const statusOptions: TaskStatus[] = ['pendente', 'em_andamento', 'concluida', 'cancelada'];
+
+export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUpdate }: Props) {
+  const isCreate = mode === 'create';
+  const isEdit = mode === 'edit';
+  const isView = mode === 'view';
+
+  const [titulo, setTitulo] = React.useState('');
+  const [descricao, setDescricao] = React.useState('');
+  const [prioridade, setPrioridade] = React.useState<TaskPriority>('media');
+  const [status, setStatus] = React.useState<TaskStatus>('pendente');
+  const [venceEm, setVenceEm] = React.useState<string>('');
+  const [ordemServicoId, setOsId] = React.useState<number | ''>('');
+  const [clienteId, setClienteId] = React.useState<number | ''>('');
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
-    if (!open || mode !== "create") return;
-    setTipo("servico");
-    setClienteId("");
-    setVeiculoId("");
-    setDescricao("");
-    setDescontoValor("");
-    setItens([{ descricao: "", quantidade: 1, precoUnitario: 0 }]);
-  }, [open, mode]);
+    if (!open) return;
+    if (isCreate) {
+      setTitulo('');
+      setDescricao('');
+      setPrioridade('media');
+      setStatus('pendente');
+      setVenceEm('');
+      setOsId('');
+      setClienteId('');
+      return;
+    }
+    if (detail) {
+      setTitulo(detail.titulo);
+      setDescricao(detail.descricao ?? '');
+      setPrioridade(detail.prioridade);
+      setStatus(detail.status);
+      setVenceEm(detail.venceEm ? detail.venceEm.slice(0, 16) : ''); // datetime-local
+      setOsId(detail.ordemServicoId ?? '');
+      setClienteId(detail.clienteId ?? '');
+    }
+  }, [open, isCreate, detail]);
 
-  const subtotal = itens.reduce((acc, it) => acc + (Number(it.quantidade) || 0) * (Number(it.precoUnitario) || 0), 0);
-  const total = Math.max(0, subtotal - (Number(descontoValor) || 0));
+  const canSubmitCreate = isCreate && titulo.trim().length > 0;
+  const canSubmitEdit = isEdit && titulo.trim().length > 0;
 
-  const addItem = () => setItens((p) => [...p, { descricao: "", quantidade: 1, precoUnitario: 0 }]);
-  const removeItem = (i: number) => setItens((p) => p.filter((_, idx) => idx !== i));
-  const updateItem = (idx: number, patch: Partial<ItemOsDto>) =>
-    setItens((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
-
-  const canSubmit =
-    mode === "create" &&
-    clienteId !== "" &&
-    veiculoId !== "" &&
-    itens.length > 0 &&
-    itens.every((it) => (it.itemId || (it.descricao && it.descricao.trim().length > 0)) && (it.quantidade || 0) > 0);
-
-  const headerIcon = mode === "create" ? <AddTaskRoundedIcon /> : <VisibilityRoundedIcon />;
-
-  const handleCreate = async () => {
-    if (!canSubmit || !onCreate) return;
-    const dto: OrdemServicoCriarDto = {
-      tipo,
-      clienteId: Number(clienteId),
-      veiculoId: Number(veiculoId),
-      descricao: descricao.trim() || undefined,
-      descontoValor: Number(descontoValor) || 0,
-      itens: itens.map((it) => ({
-        itemId: it.itemId ?? undefined,
-        descricao: it.itemId ? undefined : (it.descricao?.trim() || undefined),
-        quantidade: Number(it.quantidade) || 0,
-        precoUnitario: Number(it.precoUnitario) || 0,
-      })),
-    };
-    await onCreate(dto);
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      setSaving(true);
+      if (isCreate && onCreate) {
+        const dto: TaskCreateDto = {
+          titulo: titulo.trim(),
+          descricao: descricao.trim() || undefined,
+          prioridade,
+          venceEm: venceEm ? new Date(venceEm).toISOString() : undefined,
+          ordemServicoId: ordemServicoId === '' ? undefined : Number(ordemServicoId),
+          clienteId: clienteId === '' ? undefined : Number(clienteId),
+        };
+        await onCreate(dto);
+        onClose();
+      } else if (isEdit && onUpdate && detail) {
+        const dto: TaskUpdateDto = {
+          titulo: titulo.trim(),
+          descricao: descricao.trim() || undefined,
+          prioridade,
+          status,
+          venceEm: venceEm ? new Date(venceEm).toISOString() : undefined,
+          ordemServicoId: ordemServicoId === '' ? undefined : Number(ordemServicoId),
+          clienteId: clienteId === '' ? undefined : Number(clienteId),
+        };
+        await onUpdate(dto);
+        onClose();
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}>
-      <Paper elevation={0} square sx={{
-        px: 3, py: 2, display: "flex", alignItems: "center", justifyContent: "space-between",
-        bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
-      }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <HeaderIconWrapper>{headerIcon}</HeaderIconWrapper>
-          <Stack spacing={0}>
-            <Typography variant="subtitle1" fontWeight={800}>
-              {mode === "create" ? "Nova Ordem de Serviço" : `OS #${detail?.id}`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {mode === "create" ? "Preencha os campos e salve para criar a OS" : "Detalhes da ordem de serviço"}
-            </Typography>
-          </Stack>
-        </Stack>
-        <IconButton onClick={onClose} size="small"><CloseRoundedIcon /></IconButton>
-      </Paper>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.06) }}>
+        {isCreate ? 'Nova Tarefa' : isEdit ? `Editar Tarefa #${detail?.id}` : `Tarefa #${detail?.id}`}
+      </DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <Stack spacing={2.25}>
+          <TextField
+            label="Título"
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            disabled={isView}
+            autoFocus
+            fullWidth
+          />
 
-      <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
-        {mode === "create" ? (
-          <Stack spacing={2.25}>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField select label="Tipo" value={tipo} onChange={(e) => setTipo(e.target.value as OsTipo)} sx={{ minWidth: 180 }}>
-                <MenuItem value="servico">Serviço</MenuItem>
-                <MenuItem value="manutencao">Manutenção</MenuItem>
+          <TextField
+            label="Descrição"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            disabled={isView}
+            fullWidth
+            multiline
+            minRows={3}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <DescriptionRoundedIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField
+              select
+              label="Prioridade"
+              value={prioridade}
+              onChange={(e) => setPrioridade(e.target.value as TaskPriority)}
+              disabled={isView}
+              sx={{ minWidth: 160 }}
+            >
+              {prioridadeOptions.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {p === 'baixa' ? 'Baixa' : p === 'media' ? 'Média' : 'Alta'}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {!isCreate && (
+              <TextField
+                select
+                label="Status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                disabled={isView}
+                sx={{ minWidth: 180 }}
+              >
+                {statusOptions.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
               </TextField>
-              <TextField type="number" label="Cliente (ID)" value={clienteId} onChange={(e) => setClienteId(e.target.value === "" ? "" : Number(e.target.value))} />
-              <TextField type="number" label="Veículo (ID)" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value === "" ? "" : Number(e.target.value))} />
-            </Stack>
+            )}
 
             <TextField
-              label="Descrição (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)}
-              multiline minRows={2} InputProps={{ startAdornment: <InputAdornment position="start"><NotesRoundedIcon fontSize="small" /></InputAdornment> }}
+              type="datetime-local"
+              label="Vence em"
+              value={venceEm}
+              onChange={(e) => setVenceEm(e.target.value)}
+              disabled={isView}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EventRoundedIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: 220 }}
             />
-
-            <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 60 }}>#</TableCell>
-                    <TableCell>Descrição do item</TableCell>
-                    <TableCell align="right" sx={{ width: 120 }}>Qtd</TableCell>
-                    <TableCell align="right" sx={{ width: 140 }}>Preço unit.</TableCell>
-                    <TableCell align="right" sx={{ width: 140 }}>Total</TableCell>
-                    <TableCell align="right" sx={{ width: 80 }}>Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {itens.map((it, i) => {
-                    const tot = (Number(it.quantidade) || 0) * (Number(it.precoUnitario) || 0);
-                    return (
-                      <TableRow key={i}>
-                        <TableCell>{i + 1}</TableCell>
-                        <TableCell>
-                          <TextField placeholder="Descrição do serviço/peça" fullWidth value={it.descricao ?? ""} onChange={(e) => updateItem(i, { descricao: e.target.value })} />
-                        </TableCell>
-                        <TableCell align="right">
-                          <TextField type="number" inputProps={{ step: "0.01" }} value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: Number(e.target.value) })} sx={{ width: 110 }} />
-                        </TableCell>
-                        <TableCell align="right">
-                          <TextField type="number" inputProps={{ step: "0.01" }} value={it.precoUnitario} onChange={(e) => updateItem(i, { precoUnitario: Number(e.target.value) })} sx={{ width: 130 }} />
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700 }}>{currency.format(tot)}</TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" color="error" onClick={() => removeItem(i)}>
-                            <DeleteRoundedIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5 }}>
-                <Button onClick={addItem}>Adicionar item</Button>
-                <Stack direction="row" spacing={3} alignItems="center">
-                  <Typography>Subtotal: <b>{currency.format(subtotal)}</b></Typography>
-                  <TextField
-                    label="Desconto (R$)" type="number" inputProps={{ step: "0.01" }} value={descontoValor}
-                    onChange={(e) => setDescontoValor(e.target.value === "" ? "" : Number(e.target.value))}
-                    sx={{ width: 160 }}
-                  />
-                  <Divider orientation="vertical" flexItem />
-                  <Typography variant="h6">Total: <b>{currency.format(total)}</b></Typography>
-                </Stack>
-              </Stack>
-            </Paper>
           </Stack>
-        ) : (
-          detail && (
-            <Stack spacing={2}>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Chip label={`Status: ${detail.status}`} />
-                <Chip label={`Tipo: ${detail.tipo}`} />
-                <Chip label={`Cliente #${detail.clienteId}`} />
-                <Chip label={`Veículo #${detail.veiculoId}`} />
-                <Chip color="success" label={`Total: ${currency.format(detail.valorTotal)}`} />
-              </Stack>
 
-              {detail.descricao && (
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>Descrição</Typography>
-                  <Typography variant="body2" color="text.secondary">{detail.descricao}</Typography>
-                </Paper>
-              )}
-
-              <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Item</TableCell>
-                      <TableCell align="right">Qtd</TableCell>
-                      <TableCell align="right">Preço unit.</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detail.itens.map((it, i) => (
-                      <TableRow key={it.id}>
-                        <TableCell>{i + 1}</TableCell>
-                        <TableCell>{it.descricao || `Item ${it.itemId ?? ""}`}</TableCell>
-                        <TableCell align="right">{it.quantidade}</TableCell>
-                        <TableCell align="right">{currency.format(it.precoUnitario)}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700 }}>{currency.format(it.total)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <Stack direction="row" justifyContent="flex-end" spacing={3} sx={{ p: 1.5 }}>
-                  <Typography>Desconto: <b>{currency.format(detail.descontoValor)}</b></Typography>
-                  <Divider orientation="vertical" flexItem />
-                  <Typography variant="h6">Total: <b>{currency.format(detail.valorTotal)}</b></Typography>
-                </Stack>
-              </Paper>
-            </Stack>
-          )
-        )}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField
+              type="number"
+              label="OS relacionada (ID)"
+              value={ordemServicoId}
+              onChange={(e) => setOsId(e.target.value === '' ? '' : Number(e.target.value))}
+              disabled={isView}
+            />
+            <TextField
+              type="number"
+              label="Cliente (ID)"
+              value={clienteId}
+              onChange={(e) => setClienteId(e.target.value === '' ? '' : Number(e.target.value))}
+              disabled={isView}
+            />
+          </Stack>
+        </Stack>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-        {mode === "view" ? (
-          <>
-            {onDelete && <Button color="error" startIcon={<DeleteRoundedIcon />} onClick={onDelete}>Excluir</Button>}
-            {onFinalize && detail?.status === "aberta" && (
-              <Button startIcon={<CheckCircleRoundedIcon />} onClick={onFinalize}>Finalizar OS</Button>
-            )}
-            <Button onClick={onClose} sx={{ ml: "auto" }}>Fechar</Button>
-          </>
-        ) : (
-          <>
-            <Button onClick={onClose}>Cancelar</Button>
-            <Button variant="contained" onClick={handleCreate} disabled={!canSubmit}>Criar OS</Button>
-          </>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose}>Fechar</Button>
+        {(isCreate || isEdit) && (
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={saving || (isCreate ? !canSubmitCreate : !canSubmitEdit)}
+          >
+            {isCreate ? 'Criar' : 'Salvar alterações'}
+          </Button>
         )}
       </DialogActions>
     </Dialog>

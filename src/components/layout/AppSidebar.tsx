@@ -1,1 +1,167 @@
-import {  Drawer, Box, List, ListItemButton, ListItemIcon, ListItemText,  Typography, useTheme,  Paper} from '@mui/material';import { alpha } from '@mui/material/styles';import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';import EventOutlineIcon from '@mui/icons-material/EventOutlined';import PeopleOutlineIcon from '@mui/icons-material/PeopleOutlined';import ChecklistOutlineIcon from '@mui/icons-material/ChecklistOutlined';import PaymentsOutlineIcon from '@mui/icons-material/PaymentsOutlined';import RequestQuoteOutlineIcon from '@mui/icons-material/RequestQuoteOutlined';import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';import BarChartOutlineIcon from '@mui/icons-material/BarChartOutlined';import SettingsOutlineIcon from '@mui/icons-material/SettingsOutlined';import { useLocation, useNavigate } from 'react-router-dom';import { paths } from '../../routes/paths';import logo from '../../assets/logo.png';type Props = {  drawerWidth: number;  mobileOpen?: boolean;  onCloseMobile?: () => void;};const navItems = [  { label: 'Início', icon: <HomeOutlineIcon />, to: paths.root },  { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },  { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },  { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },  { label: 'Pagamentos', icon: <PaymentsOutlineIcon />, to: paths.payments },  { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },  { label: 'Usuários', icon: <PersonOutlineIcon />, to: paths.users },  { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },  { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },];function Brand() {  return null;}function NavList({ onItemClick }: { onItemClick?: () => void }) {  const { pathname } = useLocation();  const nav = useNavigate();  const theme = useTheme();  return (    <List sx={{ px: 1.25, py: 1 }}>      {navItems.map(({ label, icon, to }) => {        const selected = (to === paths.root && pathname === '/') || pathname === to;        const pillBg = selected ? alpha(theme.palette.primary.main, 0.12) : 'transparent';        const leftBar = selected ? theme.palette.primary.main : 'transparent';        return (          <ListItemButton            key={to}            selected={selected}            onClick={() => {              nav(to);              onItemClick?.();            }}            disableRipple            sx={{              position: 'relative',              my: 0.5,              height: 48,              borderRadius: 999,              pl: 1.25,              pr: 1.5,              bgcolor: pillBg,              transition: 'background-color .15s ease',              '&::before': {                content: '""',                position: 'absolute',                left: 4,                top: 5,                bottom: 5,                width: 3,                borderRadius: 2,                backgroundColor: leftBar,              },              '&:hover': {                bgcolor: selected ? alpha(theme.palette.primary.main, 0.18) : 'action.hover',              },            }}          >            <ListItemIcon sx={{ minWidth: 44 }}>              <Box                sx={{                  width: 28,                  height: 28,                  borderRadius: '50%',                  display: 'grid',                  placeItems: 'center',                  color: selected ? theme.palette.primary.main : theme.palette.text.secondary,                }}              >                {icon}              </Box>            </ListItemIcon>            <ListItemText              primary={                <Typography                  variant="body2"                  sx={{                    fontWeight: selected ? 700 : 500,                    color: selected ? theme.palette.primary.main : theme.palette.text.primary,                  }}                >                  {label}                </Typography>              }            />          </ListItemButton>        );      })}    </List>  );}export default function AppSidebar({  drawerWidth,  mobileOpen = false,  onCloseMobile,}: Props) {  const content = (    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>      <Paper elevation={0} sx={{ bgcolor: '#fff', border: 'none' }}>        <img src={logo} alt="Logo da empresa" width={180} style={{ display: 'block', margin: '0 auto' }} />      </Paper>      <Brand />      <NavList onItemClick={onCloseMobile} />      <Box sx={{ flexGrow: 1 }} />    </Box>  );  return (    <>      <Drawer        variant="temporary"        open={mobileOpen}        onClose={onCloseMobile}        ModalProps={{ keepMounted: true }}        PaperProps={{ elevation: 0 }}        sx={{          display: { xs: 'block', md: 'none' },          '& .MuiDrawer-paper': {            width: drawerWidth,            boxSizing: 'border-box',            bgcolor: '#FFFFFF',            borderRight: 'none'          },        }}      >        {content}      </Drawer>      <Drawer        variant="permanent"        open        PaperProps={{ elevation: 0 }}        sx={{          display: { xs: 'none', md: 'block' },          '& .MuiDrawer-paper': {            width: drawerWidth,            boxSizing: 'border-box',            borderRight: 'none',            bgcolor: '#FFFFFF',          },        }}      >        {content}      </Drawer>    </>  );}
+import {
+  Drawer, Box, List, ListItemButton, ListItemIcon, ListItemText,
+  Typography, useTheme,
+  Paper
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';
+import EventOutlineIcon from '@mui/icons-material/EventOutlined';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutlined';
+import ChecklistOutlineIcon from '@mui/icons-material/ChecklistOutlined';
+import PaymentsOutlineIcon from '@mui/icons-material/PaymentsOutlined';
+import RequestQuoteOutlineIcon from '@mui/icons-material/RequestQuoteOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';
+import BarChartOutlineIcon from '@mui/icons-material/BarChartOutlined';
+import SettingsOutlineIcon from '@mui/icons-material/SettingsOutlined';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { paths } from '../../routes/paths';
+import logo from '../../assets/logo.png';
+type Props = {
+  drawerWidth: number;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
+};
+const navItems = [
+  { label: 'Início', icon: <HomeOutlineIcon />, to: paths.root },
+  { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },
+  { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },
+  { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },
+  { label: 'Pagamentos', icon: <PaymentsOutlineIcon />, to: paths.payments },
+  { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },
+  { label: 'Usuários', icon: <PersonOutlineIcon />, to: paths.users },
+  { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },
+  { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },
+];
+function Brand() {
+  return null;
+}
+function NavList({ onItemClick }: { onItemClick?: () => void }) {
+  const { pathname } = useLocation();
+  const nav = useNavigate();
+  const theme = useTheme();
+  return (
+    <List sx={{ px: 1.25, py: 1 }}>
+      {navItems.map(({ label, icon, to }) => {
+        const selected = (to === paths.root && pathname === '/') || pathname === to;
+        const pillBg = selected ? alpha(theme.palette.primary.main, 0.12) : 'transparent';
+        const leftBar = selected ? theme.palette.primary.main : 'transparent';
+        return (
+          <ListItemButton
+            key={to}
+            selected={selected}
+            onClick={() => {
+              nav(to);
+              onItemClick?.();
+            }}
+            disableRipple
+            sx={{
+              position: 'relative',
+              my: 0.5,
+              height: 48,
+              borderRadius: 999,
+              pl: 1.25,
+              pr: 1.5,
+              bgcolor: pillBg,
+              transition: 'background-color .15s ease',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                left: 4,
+                top: 5,
+                bottom: 5,
+                width: 3,
+                borderRadius: 2,
+                backgroundColor: leftBar,
+              },
+              '&:hover': {
+                bgcolor: selected ? alpha(theme.palette.primary.main, 0.18) : 'action.hover',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 44 }}>
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
+                }}
+              >
+                {icon}
+              </Box>
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: selected ? 700 : 500,
+                    color: selected ? theme.palette.primary.main : theme.palette.text.primary,
+                  }}
+                >
+                  {label}
+                </Typography>
+              }
+            />
+          </ListItemButton>
+        );
+      })}
+    </List>
+  );
+}
+export default function AppSidebar({
+  drawerWidth,
+  mobileOpen = false,
+  onCloseMobile,
+}: Props) {
+  const content = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Paper elevation={0} sx={{ bgcolor: '#fff', border: 'none' }}>
+        <img src={logo} alt="Logo da empresa" width={180} style={{ display: 'block', margin: '0 auto' }} />
+      </Paper>
+      <Brand />
+      <NavList onItemClick={onCloseMobile} />
+      <Box sx={{ flexGrow: 1 }} />
+    </Box>
+  );
+  return (
+    <>
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onCloseMobile}
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{ elevation: 0 }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            bgcolor: '#FFFFFF',
+            borderRight: 'none'
+          },
+        }}
+      >
+        {content}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        open
+        PaperProps={{ elevation: 0 }}
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            borderRight: 'none',
+            bgcolor: '#FFFFFF',
+          },
+        }}
+      >
+        {content}
+      </Drawer>
+    </>
+  );
+}

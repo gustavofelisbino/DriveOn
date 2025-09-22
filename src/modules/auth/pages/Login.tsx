@@ -13,8 +13,8 @@ export default function Login() {
   const nav = useNavigate();
 
   const [show, setShow] = useState(false);
-  const [email, setEmail] = useState('gustavo.dias@gmail.com'); // ajuste
-  const [password, setPassword] = useState('123456');           // ajuste
+  const [email, setEmail] = useState('gustavo.dias@gmail.com');
+  const [password, setPassword] = useState('123456');
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

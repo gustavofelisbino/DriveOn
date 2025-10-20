@@ -1,7 +1,6 @@
 import {
   Drawer, Box, List, ListItemButton, ListItemIcon, ListItemText,
-  Typography, useTheme,
-  Paper
+  Typography, useTheme, Paper, IconButton, Tooltip, Divider
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';
@@ -13,14 +12,19 @@ import RequestQuoteOutlineIcon from '@mui/icons-material/RequestQuoteOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';
 import BarChartOutlineIcon from '@mui/icons-material/BarChartOutlined';
 import SettingsOutlineIcon from '@mui/icons-material/SettingsOutlined';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { paths } from '../../routes/paths';
 import logo from '../../assets/logo.png';
+import { useSidebar } from '../../context/SidebarContext';
+
 type Props = {
   drawerWidth: number;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
 };
+
 const navItems = [
   { label: 'Início', icon: <HomeOutlineIcon />, to: paths.root },
   { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },
@@ -32,20 +36,18 @@ const navItems = [
   { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },
   { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },
 ];
-function Brand() {
-  return null;
-}
-function NavList({ onItemClick }: { onItemClick?: () => void }) {
+
+function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collapsed?: boolean }) {
   const { pathname } = useLocation();
   const nav = useNavigate();
   const theme = useTheme();
+
   return (
-    <List sx={{ px: 1.25, py: 1 }}>
+    <List sx={{ px: collapsed ? 1 : 1.5, py: 0.5, flex: 1, overflow: 'auto' }}>
       {navItems.map(({ label, icon, to }) => {
         const selected = (to === paths.root && pathname === '/') || pathname === to;
-        const pillBg = selected ? alpha(theme.palette.primary.main, 0.12) : 'transparent';
-        const leftBar = selected ? theme.palette.primary.main : 'transparent';
-        return (
+
+        const button = (
           <ListItemButton
             key={to}
             selected={selected}
@@ -53,81 +55,152 @@ function NavList({ onItemClick }: { onItemClick?: () => void }) {
               nav(to);
               onItemClick?.();
             }}
-            disableRipple
             sx={{
-              position: 'relative',
-              my: 0.5,
-              height: 48,
-              borderRadius: 999,
-              pl: 1.25,
-              pr: 1.5,
-              bgcolor: pillBg,
-              transition: 'background-color .15s ease',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                left: 4,
-                top: 5,
-                bottom: 5,
-                width: 3,
-                borderRadius: 2,
-                backgroundColor: leftBar,
-              },
+              my: 0.25,
+              minHeight: 44,
+              borderRadius: collapsed ? 1.5 : 2,
+              px: collapsed ? 0 : 1.5,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              bgcolor: selected ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+              color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
+              transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: selected ? alpha(theme.palette.primary.main, 0.18) : 'action.hover',
+                bgcolor: selected 
+                  ? alpha(theme.palette.primary.main, 0.15) 
+                  : alpha(theme.palette.action.hover, 0.10),
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 44 }}>
-              <Box
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
-                }}
-              >
-                {icon}
-              </Box>
+            <ListItemIcon 
+              sx={{ 
+                minWidth: collapsed ? 0 : 40, 
+                justifyContent: 'center',
+                color: 'inherit',
+              }}
+            >
+              {icon}
             </ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: selected ? 700 : 500,
-                    color: selected ? theme.palette.primary.main : theme.palette.text.primary,
-                  }}
-                >
-                  {label}
-                </Typography>
-              }
-            />
+            {!collapsed && (
+              <ListItemText
+                primary={label}
+                primaryTypographyProps={{
+                  fontSize: 14,
+                  fontWeight: selected ? 600 : 500,
+                }}
+              />
+            )}
           </ListItemButton>
         );
+
+        return collapsed ? (
+          <Tooltip key={to} title={label} placement="right" arrow>
+            {button}
+          </Tooltip>
+        ) : button;
       })}
     </List>
   );
 }
+
 export default function AppSidebar({
   drawerWidth,
   mobileOpen = false,
   onCloseMobile,
 }: Props) {
+  const theme = useTheme();
+  const { collapsed, toggleCollapsed } = useSidebar();
+  const collapsedWidth = 64;
+  const currentWidth = collapsed ? collapsedWidth : drawerWidth;
+
   const content = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper elevation={0} sx={{ bgcolor: '#fff', border: 'none' }}>
-        <img src={logo} alt="Logo da empresa" width={180} style={{ display: 'block', margin: '0 auto' }} />
-      </Paper>
-      <Brand />
-      <NavList onItemClick={onCloseMobile} />
-      <Box sx={{ flexGrow: 1 }} />
+    <Box 
+      sx={{ 
+        height: '100vh',
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Logo Section */}
+      <Box
+        sx={{
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
+          minHeight: 64,
+          flexShrink: 0,
+        }}
+      >
+        {collapsed ? (
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 1.5,
+              bgcolor: theme.palette.primary.main,
+              display: 'grid',
+              placeItems: 'center',
+              color: 'white',
+              fontWeight: 800,
+              fontSize: 18,
+            }}
+          >
+            D
+          </Box>
+        ) : (
+          <>
+            <img 
+              src={logo} 
+              alt="Logo" 
+              style={{ 
+                height: 32,
+                maxWidth: '70%',
+                objectFit: 'contain',
+              }} 
+            />
+            <IconButton
+              onClick={toggleCollapsed}
+              size="small"
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.action.hover, 0.5),
+                },
+              }}
+            >
+              <ChevronLeftIcon fontSize="small" />
+            </IconButton>
+          </>
+        )}
+      </Box>
+
+      {collapsed && (
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', pb: 1, flexShrink: 0 }}>
+          <IconButton
+            onClick={toggleCollapsed}
+            size="small"
+            sx={{
+              '&:hover': {
+                bgcolor: alpha(theme.palette.action.hover, 0.5),
+              },
+            }}
+          >
+            <MenuIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+
+      <Divider sx={{ flexShrink: 0 }} />
+
+      {/* Navigation */}
+      <NavList onItemClick={onCloseMobile} collapsed={collapsed} />
     </Box>
   );
+
   return (
     <>
+      {/* Mobile Drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -140,12 +213,14 @@ export default function AppSidebar({
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: '#FFFFFF',
-            borderRight: 'none'
+            borderRight: (t) => `1px solid ${t.palette.divider}`,
           },
         }}
       >
         {content}
       </Drawer>
+
+      {/* Desktop Drawer */}
       <Drawer
         variant="permanent"
         open
@@ -153,10 +228,15 @@ export default function AppSidebar({
         sx={{
           display: { xs: 'none', md: 'block' },
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: currentWidth,
             boxSizing: 'border-box',
-            borderRight: 'none',
+            borderRight: (t) => `1px solid ${t.palette.divider}`,
             bgcolor: '#FFFFFF',
+            transition: theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: 'hidden',
           },
         }}
       >

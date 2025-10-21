@@ -13,6 +13,13 @@ import ContasPagar from '../modules/pagamentos/pages/contaspagar/contaspagar';
 import ContasReceber from '../modules/pagamentos/pages/contasreceber/contasreceber';
 import UserPage from '../modules/usuarios/pages/UserForm';
 import ClientDetails from '../modules/clientes/pages/detalhesclientes/detalhesclientes';
+import Orcamentos from '../modules/orcamentos/pages/orcamentos';
+import Relatorios from '../modules/relatorios/pages/relatorios';
+import ClientesRelatorio from '../modules/relatorios/pages/clientes/clientesrelatorio';
+import FinanceiroRelatorio from '../modules/relatorios/pages/financeiro/financeirorelatorio';
+import AgendaRelatorio from '../modules/relatorios/pages/agenda/agendarelatorio';
+import GeralRelatorio from '../modules/relatorios/pages/geral/geralrelatorio';
+import Configuracoes from '../modules/configuracoes/pages/configuracoes';
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -40,6 +47,13 @@ export default function Router() {
         <Route path={paths.contasReceber} element={<ContasReceber />} />
         <Route path={paths.users} element={<UserPage />} />
         <Route path={paths.clientDetails} element={<ClientDetails />} />
+        <Route path={paths.orcamentos} element={<Orcamentos />} />
+        <Route path={paths.relatorios} element={<Relatorios />} />
+        <Route path={paths.clientesRelatorio} element={<ClientesRelatorio />} />
+        <Route path={paths.financeiroRelatorio} element={<FinanceiroRelatorio />} />
+        <Route path={paths.agendaRelatorio} element={<AgendaRelatorio />} />
+        <Route path={paths.geralRelatorio} element={<GeralRelatorio />} />
+        <Route path={paths.configuracoes} element={<Configuracoes />} />
       </Route>
     </Routes>
   );

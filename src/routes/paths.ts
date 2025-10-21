@@ -12,4 +12,12 @@ export const paths = {
     contasPagar: '/contas-pagar',
     contasReceber: '/contas-receber',
     clientDetails: '/clientes/:id',
+    orcamentos: '/orcamentos',
+    orcamentoDetails: '/orcamentos/:id',
+    relatorios: '/relatorios',
+    clientesRelatorio: '/relatorios/clientes',
+    financeiroRelatorio: '/relatorios/financeiro',
+    agendaRelatorio: '/relatorios/agenda',
+    geralRelatorio: '/relatorios/geral',
+    configuracoes: '/configuracoes',
   } as const;

@@ -6,23 +6,21 @@ import {
   Typography,
   Button,
   IconButton,
-  Chip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import CircleIcon from '@mui/icons-material/Circle';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 
-import DialogCarro, { type CarForm } from '../dialog/carro';
-import DialogAgendamento, { type TaskForm } from '../dialog/agendamento';
-import type { ClientForm } from '../../clients/dialog';
+import DialogCarro from '../dialog/carro';
+import DialogAgendamento from '../dialog/agendamento';
+import { useNavigate } from 'react-router-dom';
 
 // Mock inicial
 const initialTasks = [
@@ -31,10 +29,15 @@ const initialTasks = [
   { title: 'Revisão geral - Peugeot 208 2014', date: '02/07/2025 às 17:00' },
 ];
 
-const initialCars = ['Chevrolet Astra - 2003', 'Mitsubishi ASX - 2015', 'Peugeot 208 - 2014'];
+const initialCars = [
+  'Chevrolet Astra - 2003',
+  'Mitsubishi ASX - 2015',
+  'Peugeot 208 - 2014',
+];
+
 const initialClients = ['Gustavo', 'Maria', 'Pedro'];
 
-// Botão estilizado
+// Botão padrão estilizado
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
   return (
@@ -50,12 +53,10 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
         fontWeight: 600,
         textTransform: 'none',
         fontSize: 13,
-        boxShadow: (t) => `0 4px 14px ${alpha(t.palette.primary.main, 0.25)}`,
-        transition: 'all 0.25s ease',
+        boxShadow: 'none',
         '&:hover': {
           bgcolor: 'primary.dark',
-          transform: 'translateY(-2px)',
-          boxShadow: (t) => `0 6px 20px ${alpha(t.palette.primary.main, 0.35)}`,
+          boxShadow: 'none',
         },
         ...sx,
       }}
@@ -63,28 +64,7 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
   );
 }
 
-// Chip de status
-function StatusDot({ color = 'warning.main', label = 'pendente' }) {
-  return (
-    <Chip
-      icon={<CircleIcon sx={{ fontSize: 8, '&&': { ml: 1.5 } }} />}
-      label={label}
-      size="small"
-      sx={{
-        height: 24,
-        bgcolor: (t) => alpha(t.palette[color.split('.')[0] as any].main, 0.12),
-        color: color,
-        border: (t) =>
-          `1px solid ${alpha(t.palette[color.split('.')[0] as any].main, 0.2)}`,
-        fontWeight: 600,
-        fontSize: 11,
-        '& .MuiChip-icon': { color: 'inherit' },
-      }}
-    />
-  );
-}
-
-// Card de seção (Atividades, Carros, Clientes)
+// Card de seção
 function SectionCard({
   title,
   icon,
@@ -106,17 +86,8 @@ function SectionCard({
         borderRadius: 3,
         border: `1px solid ${theme.palette.divider}`,
         bgcolor: 'background.paper',
-        transition: theme.transitions.create(['transform', 'box-shadow', 'border-color'], {
-          duration: theme.transitions.duration.standard,
-          easing: theme.transitions.easing.easeInOut,
-        }),
         flex: 1,
         minWidth: 0,
-        '&:hover': {
-          boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.08)}`,
-          borderColor: alpha(theme.palette.primary.main, 0.3),
-          transform: 'translateY(-4px)',
-        },
       })}
     >
       <Stack spacing={2}>
@@ -132,8 +103,6 @@ function SectionCard({
                 bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
                 color: 'primary.main',
                 flexShrink: 0,
-                transition: 'all 0.3s ease',
-                '&:hover': { transform: 'rotate(-5deg) scale(1.05)' },
               }}
             >
               {icon}
@@ -161,15 +130,13 @@ function SectionCard({
   );
 }
 
-// Linha de lista (itens dentro dos cards)
+// Linha de lista
 function ListRow({
   title,
   subtitle,
-  trailing,
 }: {
   title: string;
   subtitle?: string;
-  trailing?: React.ReactNode;
 }) {
   return (
     <Stack
@@ -178,13 +145,11 @@ function ListRow({
       justifyContent="space-between"
       spacing={2}
       sx={{
-        py: 1.5,
-        px: 1.5,
+        py: 1.25,
+        px: 1.25,
         borderRadius: 2,
-        transition: 'all 0.3s ease',
         '&:hover': {
           bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
-          transform: 'translateX(4px)',
         },
       }}
     >
@@ -203,38 +168,7 @@ function ListRow({
           </Typography>
         )}
       </Box>
-      {trailing}
     </Stack>
-  );
-}
-
-// Estado vazio
-function EmptyState({ icon, text, hint }: { icon: React.ReactNode; text: string; hint?: string }) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        borderRadius: 2.5,
-        py: 4,
-        px: 2,
-        textAlign: 'center',
-        bgcolor: (t) => alpha(t.palette.action.hover, 0.3),
-        borderStyle: 'dashed',
-        borderColor: 'divider',
-      }}
-    >
-      <Stack spacing={1.2} alignItems="center">
-        <Box sx={{ opacity: 0.5 }}>{icon}</Box>
-        <Typography fontWeight={600} variant="body2">
-          {text}
-        </Typography>
-        {hint && (
-          <Typography variant="caption" color="text.secondary">
-            {hint}
-          </Typography>
-        )}
-      </Stack>
-    </Paper>
   );
 }
 
@@ -244,34 +178,16 @@ export default function Home() {
   const [clients, setClients] = React.useState(initialClients);
   const [openTask, setOpenTask] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
-  const [openClient, setOpenClient] = React.useState(false);
+  const nav = useNavigate();
 
-  // Mock de valores financeiros
   const totalEntradas = 8650;
   const totalSaidas = 4870;
   const saldo = totalEntradas - totalSaidas;
 
-  const handleCreateTask = (data: TaskForm) => {
-    const newTask = {
-      title: data.title,
-      date: data.dateTime ? data.dateTime.format('DD/MM/YYYY [às] HH:mm') : '',
-    };
-    setTasks((prev) => [newTask, ...prev]);
-  };
-
-  const handleCreateCar = (data: CarForm) => {
-    const newCar = `${data.brand} ${data.model} - ${data.year}`;
-    setCars((prev) => [newCar, ...prev]);
-  };
-
-  const handleCreateClient = (data: ClientForm) => {
-    const newClient = `${data.name} ${data.lastName}`;
-    setClients((prev) => [newClient, ...prev]);
-  };
-
-  const visibleTasks = tasks.slice(0, 5);
-  const visibleCars = cars.slice(0, 5);
-  const visibleClients = clients.slice(0, 5);
+  // limitar visualização a 4
+  const visibleTasks = tasks.slice(0, 4);
+  const visibleCars = cars.slice(0, 4);
+  const visibleClients = clients.slice(0, 4);
 
   return (
     <Box
@@ -294,15 +210,15 @@ export default function Home() {
           <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 24, md: 28 } }}>
             Início
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontWeight: 500 }}>
+          <Typography variant="body2" color="text.secondary">
             Visão geral da sua oficina
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
-          <IconButton sx={{ bgcolor: 'action.hover', '&:hover': { bgcolor: 'action.selected' } }}>
+          <IconButton sx={{ bgcolor: 'action.hover' }}>
             <TrendingUpIcon />
           </IconButton>
-          <IconButton sx={{ bgcolor: 'action.hover', '&:hover': { bgcolor: 'action.selected' } }}>
+          <IconButton sx={{ bgcolor: 'action.hover' }}>
             <MoreHorizRoundedIcon />
           </IconButton>
         </Stack>
@@ -310,6 +226,7 @@ export default function Home() {
 
       {/* Cards Financeiros */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
+        {/* Entradas */}
         <Paper
           elevation={0}
           sx={(t) => ({
@@ -320,15 +237,7 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
-              duration: t.transitions.duration.standard,
-              easing: t.transitions.easing.easeInOut,
-            }),
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: alpha(t.palette.primary.main, 0.3),
-            },
+            bgcolor: 'background.paper',
           })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
@@ -354,6 +263,7 @@ export default function Home() {
           </Stack>
         </Paper>
 
+        {/* Saídas */}
         <Paper
           elevation={0}
           sx={(t) => ({
@@ -364,15 +274,7 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
-              duration: t.transitions.duration.standard,
-              easing: t.transitions.easing.easeInOut,
-            }),
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: alpha(t.palette.primary.main, 0.3),
-            },
+            bgcolor: 'background.paper',
           })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
@@ -398,6 +300,7 @@ export default function Home() {
           </Stack>
         </Paper>
 
+        {/* Saldo */}
         <Paper
           elevation={0}
           sx={(t) => ({
@@ -408,15 +311,7 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
-              duration: t.transitions.duration.standard,
-              easing: t.transitions.easing.easeInOut,
-            }),
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: alpha(t.palette.primary.main, 0.3),
-            },
+            bgcolor: 'background.paper',
           })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
@@ -443,8 +338,9 @@ export default function Home() {
         </Paper>
       </Stack>
 
-      {/* Cards de Listas */}
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: 'stretch' }}>
+      {/* Listas */}
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }}>
+        {/* Atividades */}
         <SectionCard
           title="Atividades"
           icon={<AssignmentRoundedIcon />}
@@ -456,20 +352,23 @@ export default function Home() {
           }
         >
           <Stack spacing={0.5}>
-            {tasks.length === 0 ? (
-              <EmptyState
-                icon={<AssignmentRoundedIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhuma tarefa"
-                hint="Clique em Adicionar para começar"
-              />
-            ) : (
-              visibleTasks.map((t, i) => (
-                <ListRow key={i} title={t.title} subtitle={t.date} trailing={<StatusDot />} />
-              ))
+            {visibleTasks.map((t, i) => (
+              <ListRow key={i} title={t.title} subtitle={t.date} />
+            ))}
+            {tasks.length > 4 && (
+              <Button
+                variant="text"
+                size="small"
+                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+                onClick={() => nav('/tarefas')}
+              >
+                Ver mais
+              </Button>
             )}
           </Stack>
         </SectionCard>
 
+        {/* Carros */}
         <SectionCard
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
@@ -481,18 +380,23 @@ export default function Home() {
           }
         >
           <Stack spacing={0.5}>
-            {cars.length === 0 ? (
-              <EmptyState
-                icon={<DirectionsCarRoundedIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhum carro"
-                hint="Use Adicionar para cadastrar"
-              />
-            ) : (
-              visibleCars.map((c, i) => <ListRow key={i} title={c} />)
+            {visibleCars.map((c, i) => (
+              <ListRow key={i} title={c} />
+            ))}
+            {cars.length > 4 && (
+              <Button
+                variant="text"
+                size="small"
+                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+                onClick={() => nav('/carros')}
+              >
+                Ver mais
+              </Button>
             )}
           </Stack>
         </SectionCard>
 
+        {/* Clientes */}
         <SectionCard
           title="Clientes"
           icon={<PersonOutlineIcon />}
@@ -504,21 +408,50 @@ export default function Home() {
           }
         >
           <Stack spacing={0.5}>
-            {clients.length === 0 ? (
-              <EmptyState
-                icon={<PersonOutlineIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhum cliente"
-                hint="Use Adicionar para registrar um novo"
-              />
-            ) : (
-              visibleClients.map((c, i) => <ListRow key={i} title={c} />)
+            {visibleClients.map((c, i) => (
+              <ListRow key={i} title={c} />
+            ))}
+            {clients.length > 4 && (
+              <Button
+                variant="text"
+                size="small"
+                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+                onClick={() => nav('/clientes')}
+              >
+                Ver mais
+              </Button>
             )}
           </Stack>
         </SectionCard>
       </Stack>
 
-      <DialogAgendamento open={openTask} onClose={() => setOpenTask(false)} onCreate={handleCreateTask} />
-      <DialogCarro open={openCar} onClose={() => setOpenCar(false)} onCreate={handleCreateCar} />
+      {/* Diálogos */}
+      <DialogAgendamento
+        open={openTask}
+        onClose={() => setOpenTask(false)}
+        onCreate={(data) => {
+          if (!data) return;
+          const newTask = {
+            title: data.title,
+            date: data.dateTime
+              ? data.dateTime.format('DD/MM/YYYY [às] HH:mm')
+              : 'Sem data definida',
+          };
+          setTasks((prev) => [newTask, ...prev]);
+          setOpenTask(false);
+        }}
+      />
+
+      <DialogCarro
+        open={openCar}
+        onClose={() => setOpenCar(false)}
+        onCreate={(data) => {
+          if (!data) return;
+          const newCar = `${data.brand} ${data.model} - ${data.year}`;
+          setCars((prev) => [newCar, ...prev]);
+          setOpenCar(false);
+        }}
+      />
     </Box>
   );
 }

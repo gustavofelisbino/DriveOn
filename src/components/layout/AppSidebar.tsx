@@ -41,7 +41,7 @@ const navItems = [
     icon: <PaymentsOutlineIcon />,
     to: paths.payments,
     subItems: [
-      { label: 'Extrato', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
+      { label: 'Pagamentos', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
       { label: 'Contas a receber', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber },
       { label: 'Contas a pagar', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
     ]

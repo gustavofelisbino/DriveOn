@@ -33,11 +33,7 @@ const initialCars = [
   'Peugeot 208 - 2014',
 ];
 
-const initialClients = [
-  'Gustavo',
-  'Maria',
-  'Pedro',
-];
+const initialClients = ['Gustavo', 'Maria', 'Pedro'];
 
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
@@ -77,7 +73,11 @@ function StatusDot({ color = 'warning.main', label = 'pendente' }) {
         height: 24,
         bgcolor: (t) => alpha(t.palette[color.split('.')[0] as any].main, 0.12),
         color: color,
-        border: (t) => `1px solid ${alpha(t.palette[color.split('.')[0] as any].main, 0.2)}`,
+        border: (t) =>
+          `1px solid ${alpha(
+            t.palette[color.split('.')[0] as any].main,
+            0.2
+          )}`,
         fontWeight: 600,
         fontSize: 11,
         '& .MuiChip-icon': {
@@ -276,10 +276,10 @@ export default function Home() {
       }}
     >
       {/* Header */}
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }} 
-        alignItems={{ xs: 'flex-start', sm: 'center' }} 
-        justifyContent="space-between" 
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
         mb={{ xs: 3, md: 4 }}
         spacing={{ xs: 2, sm: 0 }}
       >
@@ -292,26 +292,26 @@ export default function Home() {
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
-          <IconButton 
-            sx={{ 
+          <IconButton
+            sx={{
               bgcolor: 'action.hover',
               transition: 'all 0.2s ease',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: 'action.selected',
                 transform: 'scale(1.05)',
-              }
+              },
             }}
           >
             <TrendingUpIcon />
           </IconButton>
-          <IconButton 
-            sx={{ 
+          <IconButton
+            sx={{
               bgcolor: 'action.hover',
               transition: 'all 0.2s ease',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: 'action.selected',
                 transform: 'scale(1.05)',
-              }
+              },
             }}
           >
             <MoreHorizRoundedIcon />
@@ -319,22 +319,142 @@ export default function Home() {
         </Stack>
       </Stack>
 
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            flex: 1,
+            borderRadius: 2,
+            p: 4,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
+              transform: 'translateY(-4px)',
+            },
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box
+              sx={{
+                width: 46,
+                height: 46,
+                borderRadius: 2,
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
+                color: 'primary.main',
+              }}
+            >
+              <AssignmentRoundedIcon />
+            </Box>
+            <Stack>
+              <Typography fontWeight={700}>Tarefas pendentes</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            flex: 1,
+            borderRadius: 2,
+            p: 4,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
+              transform: 'translateY(-4px)',
+            },
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box
+              sx={{
+                width: 46,
+                height: 46,
+                borderRadius: 2,
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
+                color: 'primary.main',
+              }}
+            >
+              <DirectionsCarRoundedIcon />
+            </Box>
+            <Stack>
+              <Typography fontWeight={700}>Carros cadastrados</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {cars.length} {cars.length === 1 ? 'carro' : 'carros'}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            flex: 1,
+            borderRadius: 2,
+            p: 4,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
+              transform: 'translateY(-4px)',
+            },
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box
+              sx={{
+                width: 46,
+                height: 46,
+                borderRadius: 2,
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
+                color: 'primary.main',
+              }}
+            >
+              <PersonOutlineIcon />
+            </Box>
+            <Stack>
+              <Typography fontWeight={700}>Clientes</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Stack>
+
       {/* Cards Grid */}
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={{ xs: 2.5, md: 3 }}
-        sx={{ alignItems: 'stretch' }}
-      >
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: 'stretch' }}>
         {/* Atividades */}
         <SectionCard
-          title="Atividades pendentes"
+          title="Atividades"
           icon={<AssignmentRoundedIcon />}
-          count={tasks.length}
           action={
             <SoftButton
               onClick={() => setOpenTask(true)}
               startIcon={<AddRoundedIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 2 }}
             >
               Adicionar
             </SoftButton>
@@ -368,7 +488,6 @@ export default function Home() {
         <SectionCard
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
-          count={cars.length}
           action={
             <SoftButton
               onClick={() => setOpenCar(true)}
@@ -407,7 +526,6 @@ export default function Home() {
         <SectionCard
           title="Clientes"
           icon={<PersonOutlineIcon />}
-          count={clients.length}
           action={
             <SoftButton
               onClick={() => setOpenClient(true)}
@@ -443,7 +561,6 @@ export default function Home() {
         </SectionCard>
       </Stack>
 
-      {/* Dialogs */}
       <DialogAgendamento open={openTask} onClose={() => setOpenTask(false)} onCreate={handleCreateTask} />
       <DialogCarro open={openCar} onClose={() => setOpenCar(false)} onCreate={handleCreateCar} />
     </Box>

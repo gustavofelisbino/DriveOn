@@ -150,15 +150,6 @@ export default function AppSidebar({
           </Box>
         ) : (
           <>
-            <img 
-              src={logo} 
-              alt="Logo" 
-              style={{ 
-                height: 32,
-                maxWidth: '70%',
-                objectFit: 'contain',
-              }} 
-            />
             <IconButton
               onClick={toggleCollapsed}
               size="small"

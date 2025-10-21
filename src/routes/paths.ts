@@ -1,1 +1,15 @@
-export const paths = {    login: '/login',    root: '/',    agenda: '/agenda',    clients: '/clientes',    tasks: '/tarefas',    payments: '/pagamentos',    quotes: '/orcamentos',    users: '/usuarios',    reports: '/relatorios',    settings: '/configuracoes',  } as const;
+export const paths = {
+    login: '/login',
+    root: '/',
+    agenda: '/agenda',
+    clients: '/clientes',
+    tasks: '/tarefas',
+    payments: '/pagamentos',
+    quotes: '/orcamentos',
+    users: '/usuarios',
+    reports: '/relatorios',
+    settings: '/configuracoes',
+    contasPagar: '/contas-pagar',
+    contasReceber: '/contas-receber',
+    clientDetails: '/clientes/:id',
+  } as const;

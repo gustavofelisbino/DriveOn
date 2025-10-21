@@ -7,7 +7,6 @@ import {
   Button,
   IconButton,
   Chip,
-  Fade,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -17,24 +16,25 @@ import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import CircleIcon from '@mui/icons-material/Circle';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+
 import DialogCarro, { type CarForm } from '../dialog/carro';
 import DialogAgendamento, { type TaskForm } from '../dialog/agendamento';
 import type { ClientForm } from '../../clients/dialog';
 
+// Mock inicial
 const initialTasks = [
   { title: 'Troca de vela - Civic 2009', date: '19/07/2025 às 13:10' },
   { title: 'Amortecedor traseiro - Civic 2009', date: '03/07/2025 às 10:45' },
   { title: 'Revisão geral - Peugeot 208 2014', date: '02/07/2025 às 17:00' },
 ];
 
-const initialCars = [
-  'Chevrolet Astra - 2003',
-  'Mitsubishi ASX - 2015',
-  'Peugeot 208 - 2014',
-];
-
+const initialCars = ['Chevrolet Astra - 2003', 'Mitsubishi ASX - 2015', 'Peugeot 208 - 2014'];
 const initialClients = ['Gustavo', 'Maria', 'Pedro'];
 
+// Botão estilizado
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
   return (
@@ -63,6 +63,7 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
   );
 }
 
+// Chip de status
 function StatusDot({ color = 'warning.main', label = 'pendente' }) {
   return (
     <Chip
@@ -74,20 +75,16 @@ function StatusDot({ color = 'warning.main', label = 'pendente' }) {
         bgcolor: (t) => alpha(t.palette[color.split('.')[0] as any].main, 0.12),
         color: color,
         border: (t) =>
-          `1px solid ${alpha(
-            t.palette[color.split('.')[0] as any].main,
-            0.2
-          )}`,
+          `1px solid ${alpha(t.palette[color.split('.')[0] as any].main, 0.2)}`,
         fontWeight: 600,
         fontSize: 11,
-        '& .MuiChip-icon': {
-          color: 'inherit',
-        },
+        '& .MuiChip-icon': { color: 'inherit' },
       }}
     />
   );
 }
 
+// Card de seção (Atividades, Carros, Clientes)
 function SectionCard({
   title,
   icon,
@@ -102,65 +99,69 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Fade in timeout={500}>
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2.5, md: 3 },
-          borderRadius: 3,
-          border: (t) => `1px solid ${t.palette.divider}`,
-          bgcolor: 'background.paper',
-          transition: 'all 0.3s ease',
-          flex: 1,
-          minWidth: 0,
-          '&:hover': {
-            boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-            borderColor: (t) => alpha(t.palette.primary.main, 0.3),
-            transform: 'translateY(-4px)',
-          },
-        }}
-      >
-        <Stack spacing={2.0}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 2.5,
-                  display: 'grid',
-                  placeItems: 'center',
-                  bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                  color: 'primary.main',
-                  flexShrink: 0,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'rotate(-5deg) scale(1.05)',
-                  },
-                }}
-              >
-                {icon}
-              </Box>
-              <Stack spacing={0.3}>
-                <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
-                  {title}
+    <Paper
+      elevation={0}
+      sx={(theme) => ({
+        p: { xs: 2.5, md: 3 },
+        borderRadius: 3,
+        border: `1px solid ${theme.palette.divider}`,
+        bgcolor: 'background.paper',
+        transition: theme.transitions.create(['transform', 'box-shadow', 'border-color'], {
+          duration: theme.transitions.duration.standard,
+          easing: theme.transitions.easing.easeInOut,
+        }),
+        flex: 1,
+        minWidth: 0,
+        '&:hover': {
+          boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.08)}`,
+          borderColor: alpha(theme.palette.primary.main, 0.3),
+          transform: 'translateY(-4px)',
+        },
+      })}
+    >
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
+                color: 'primary.main',
+                flexShrink: 0,
+                transition: 'all 0.3s ease',
+                '&:hover': { transform: 'rotate(-5deg) scale(1.05)' },
+              }}
+            >
+              {icon}
+            </Box>
+            <Stack spacing={0.3}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+                {title}
+              </Typography>
+              {count !== undefined && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: 12, fontWeight: 500 }}
+                >
+                  {count} {count === 1 ? 'item' : 'itens'}
                 </Typography>
-                {count !== undefined && (
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, fontWeight: 500 }}>
-                    {count} {count === 1 ? 'item' : 'itens'}
-                  </Typography>
-                )}
-              </Stack>
+              )}
             </Stack>
-            {action}
           </Stack>
-          {children}
+          {action}
         </Stack>
-      </Paper>
-    </Fade>
+        {children}
+      </Stack>
+    </Paper>
   );
 }
 
+// Linha de lista (itens dentro dos cards)
 function ListRow({
   title,
   subtitle,
@@ -180,7 +181,7 @@ function ListRow({
         py: 1.5,
         px: 1.5,
         borderRadius: 2,
-        transition: 'all 0.2s ease',
+        transition: 'all 0.3s ease',
         '&:hover': {
           bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
           transform: 'translateX(4px)',
@@ -207,6 +208,7 @@ function ListRow({
   );
 }
 
+// Estado vazio
 function EmptyState({ icon, text, hint }: { icon: React.ReactNode; text: string; hint?: string }) {
   return (
     <Paper
@@ -243,6 +245,11 @@ export default function Home() {
   const [openTask, setOpenTask] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
   const [openClient, setOpenClient] = React.useState(false);
+
+  // Mock de valores financeiros
+  const totalEntradas = 8650;
+  const totalSaidas = 4870;
+  const saldo = totalEntradas - totalSaidas;
 
   const handleCreateTask = (data: TaskForm) => {
     const newTask = {
@@ -288,55 +295,41 @@ export default function Home() {
             Início
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, fontWeight: 500 }}>
-            Resumo rápido do seu dia na oficina
+            Visão geral da sua oficina
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
-          <IconButton
-            sx={{
-              bgcolor: 'action.hover',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: 'action.selected',
-                transform: 'scale(1.05)',
-              },
-            }}
-          >
+          <IconButton sx={{ bgcolor: 'action.hover', '&:hover': { bgcolor: 'action.selected' } }}>
             <TrendingUpIcon />
           </IconButton>
-          <IconButton
-            sx={{
-              bgcolor: 'action.hover',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: 'action.selected',
-                transform: 'scale(1.05)',
-              },
-            }}
-          >
+          <IconButton sx={{ bgcolor: 'action.hover', '&:hover': { bgcolor: 'action.selected' } }}>
             <MoreHorizRoundedIcon />
           </IconButton>
         </Stack>
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+      {/* Cards Financeiros */}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
         <Paper
           elevation={0}
-          sx={{
+          sx={(t) => ({
             flex: 1,
             borderRadius: 2,
             p: 4,
-            border: (t) => `1px solid ${t.palette.divider}`,
+            border: `1px solid ${t.palette.divider}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: 'all 0.3s ease',
+            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
+              duration: t.transitions.duration.standard,
+              easing: t.transitions.easing.easeInOut,
+            }),
             '&:hover': {
-              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
               transform: 'translateY(-4px)',
+              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: alpha(t.palette.primary.main, 0.3),
             },
-          }}
+          })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
@@ -346,16 +339,16 @@ export default function Home() {
                 borderRadius: 2,
                 display: 'grid',
                 placeItems: 'center',
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                color: 'primary.main',
+                bgcolor: (t) => alpha(t.palette.success.main, 0.1),
+                color: 'success.main',
               }}
             >
-              <AssignmentRoundedIcon />
+              <ArrowDownwardRoundedIcon />
             </Box>
             <Stack>
-              <Typography fontWeight={700}>Tarefas pendentes</Typography>
+              <Typography fontWeight={700}>Entradas</Typography>
               <Typography variant="body2" color="text.secondary">
-                {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
+                R$ {totalEntradas.toFixed(2)}
               </Typography>
             </Stack>
           </Stack>
@@ -363,21 +356,24 @@ export default function Home() {
 
         <Paper
           elevation={0}
-          sx={{
+          sx={(t) => ({
             flex: 1,
             borderRadius: 2,
             p: 4,
-            border: (t) => `1px solid ${t.palette.divider}`,
+            border: `1px solid ${t.palette.divider}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: 'all 0.3s ease',
+            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
+              duration: t.transitions.duration.standard,
+              easing: t.transitions.easing.easeInOut,
+            }),
             '&:hover': {
-              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
               transform: 'translateY(-4px)',
+              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: alpha(t.palette.primary.main, 0.3),
             },
-          }}
+          })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
@@ -387,16 +383,16 @@ export default function Home() {
                 borderRadius: 2,
                 display: 'grid',
                 placeItems: 'center',
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                color: 'primary.main',
+                bgcolor: (t) => alpha(t.palette.error.main, 0.1),
+                color: 'error.main',
               }}
             >
-              <DirectionsCarRoundedIcon />
+              <ArrowUpwardRoundedIcon />
             </Box>
             <Stack>
-              <Typography fontWeight={700}>Carros cadastrados</Typography>
+              <Typography fontWeight={700}>Saídas</Typography>
               <Typography variant="body2" color="text.secondary">
-                {cars.length} {cars.length === 1 ? 'carro' : 'carros'}
+                R$ {totalSaidas.toFixed(2)}
               </Typography>
             </Stack>
           </Stack>
@@ -404,21 +400,24 @@ export default function Home() {
 
         <Paper
           elevation={0}
-          sx={{
+          sx={(t) => ({
             flex: 1,
             borderRadius: 2,
             p: 4,
-            border: (t) => `1px solid ${t.palette.divider}`,
+            border: `1px solid ${t.palette.divider}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            transition: 'all 0.3s ease',
+            transition: t.transitions.create(['transform', 'box-shadow', 'border-color'], {
+              duration: t.transitions.duration.standard,
+              easing: t.transitions.easing.easeInOut,
+            }),
             '&:hover': {
-              boxShadow: (t) => `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
-              borderColor: (t) => alpha(t.palette.primary.main, 0.3),
               transform: 'translateY(-4px)',
+              boxShadow: `0 12px 40px ${alpha(t.palette.primary.main, 0.08)}`,
+              borderColor: alpha(t.palette.primary.main, 0.3),
             },
-          }}
+          })}
         >
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
@@ -432,132 +431,89 @@ export default function Home() {
                 color: 'primary.main',
               }}
             >
-              <PersonOutlineIcon />
+              <AccountBalanceWalletOutlinedIcon />
             </Box>
             <Stack>
-              <Typography fontWeight={700}>Clientes</Typography>
+              <Typography fontWeight={700}>Saldo</Typography>
               <Typography variant="body2" color="text.secondary">
-                {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
+                R$ {saldo.toFixed(2)}
               </Typography>
             </Stack>
           </Stack>
         </Paper>
       </Stack>
 
-      {/* Cards Grid */}
+      {/* Cards de Listas */}
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: 'stretch' }}>
-        {/* Atividades */}
         <SectionCard
           title="Atividades"
           icon={<AssignmentRoundedIcon />}
+          count={tasks.length}
           action={
-            <SoftButton
-              onClick={() => setOpenTask(true)}
-              startIcon={<AddRoundedIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 2 }}
-            >
+            <SoftButton onClick={() => setOpenTask(true)} startIcon={<AddRoundedIcon />}>
               Adicionar
             </SoftButton>
           }
         >
           <Stack spacing={0.5}>
-            {tasks.length === 0 && (
+            {tasks.length === 0 ? (
               <EmptyState
                 icon={<AssignmentRoundedIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhuma tarefa por aqui"
+                text="Nenhuma tarefa"
                 hint="Clique em Adicionar para começar"
               />
+            ) : (
+              visibleTasks.map((t, i) => (
+                <ListRow key={i} title={t.title} subtitle={t.date} trailing={<StatusDot />} />
+              ))
             )}
-            {visibleTasks.map((t, i) => (
-              <ListRow key={i} title={t.title} subtitle={t.date} trailing={<StatusDot />} />
-            ))}
           </Stack>
-          {tasks.length > 0 && (
-            <SoftButton
-              onClick={() => setOpenTask(true)}
-              startIcon={<AddRoundedIcon />}
-              fullWidth
-              sx={{ display: { sm: 'none' }, mt: 1 }}
-            >
-              Adicionar tarefa
-            </SoftButton>
-          )}
         </SectionCard>
 
-        {/* Carros */}
         <SectionCard
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
+          count={cars.length}
           action={
-            <SoftButton
-              onClick={() => setOpenCar(true)}
-              startIcon={<AddRoundedIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
+            <SoftButton onClick={() => setOpenCar(true)} startIcon={<AddRoundedIcon />}>
               Adicionar
             </SoftButton>
           }
         >
           <Stack spacing={0.5}>
-            {cars.length === 0 && (
+            {cars.length === 0 ? (
               <EmptyState
                 icon={<DirectionsCarRoundedIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhum carro cadastrado"
-                hint="Use Adicionar para registrar um veículo"
+                text="Nenhum carro"
+                hint="Use Adicionar para cadastrar"
               />
+            ) : (
+              visibleCars.map((c, i) => <ListRow key={i} title={c} />)
             )}
-            {visibleCars.map((c, i) => (
-              <ListRow key={i} title={c} />
-            ))}
           </Stack>
-          {cars.length > 0 && (
-            <SoftButton
-              onClick={() => setOpenCar(true)}
-              startIcon={<AddRoundedIcon />}
-              fullWidth
-              sx={{ display: { sm: 'none' }, mt: 1 }}
-            >
-              Adicionar carro
-            </SoftButton>
-          )}
         </SectionCard>
 
-        {/* Clientes */}
         <SectionCard
           title="Clientes"
           icon={<PersonOutlineIcon />}
+          count={clients.length}
           action={
-            <SoftButton
-              onClick={() => setOpenClient(true)}
-              startIcon={<AddRoundedIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
+            <SoftButton onClick={() => setOpenClient(true)} startIcon={<AddRoundedIcon />}>
               Adicionar
             </SoftButton>
           }
         >
           <Stack spacing={0.5}>
-            {clients.length === 0 && (
+            {clients.length === 0 ? (
               <EmptyState
                 icon={<PersonOutlineIcon sx={{ fontSize: 40 }} color="disabled" />}
-                text="Nenhum cliente cadastrado"
-                hint="Use Adicionar para registrar um cliente"
+                text="Nenhum cliente"
+                hint="Use Adicionar para registrar um novo"
               />
+            ) : (
+              visibleClients.map((c, i) => <ListRow key={i} title={c} />)
             )}
-            {visibleClients.map((c, i) => (
-              <ListRow key={i} title={c} />
-            ))}
           </Stack>
-          {clients.length > 0 && (
-            <SoftButton
-              onClick={() => setOpenClient(true)}
-              startIcon={<AddRoundedIcon />}
-              fullWidth
-              sx={{ display: { sm: 'none' }, mt: 1 }}
-            >
-              Adicionar cliente
-            </SoftButton>
-          )}
         </SectionCard>
       </Stack>
 

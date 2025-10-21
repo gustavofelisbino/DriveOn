@@ -1,6 +1,6 @@
 import {
   Drawer, Box, List, ListItemButton, ListItemIcon, ListItemText,
-  Typography, useTheme, Paper, IconButton, Tooltip, Divider
+  Typography, useTheme, IconButton, Tooltip, Divider, Collapse, Stack
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';
@@ -14,10 +14,16 @@ import BarChartOutlineIcon from '@mui/icons-material/BarChartOutlined';
 import SettingsOutlineIcon from '@mui/icons-material/SettingsOutlined';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { paths } from '../../routes/paths';
-import logo from '../../assets/logo.png';
 import { useSidebar } from '../../context/SidebarContext';
+import { useState } from 'react';
+import logo from '../../assets/logo.png'; // ✅ já importada
 
 type Props = {
   drawerWidth: number;
@@ -30,7 +36,16 @@ const navItems = [
   { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },
   { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },
   { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },
-  { label: 'Pagamentos', icon: <PaymentsOutlineIcon />, to: paths.payments },
+  {
+    label: 'Pagamentos',
+    icon: <PaymentsOutlineIcon />,
+    to: paths.payments,
+    subItems: [
+      { label: 'Extrato', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
+      { label: 'Contas a receber', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber },
+      { label: 'Contas a pagar', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
+    ]
+  },
   { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },
   { label: 'Usuários', icon: <PersonOutlineIcon />, to: paths.users },
   { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },
@@ -41,19 +56,31 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
   const { pathname } = useLocation();
   const nav = useNavigate();
   const theme = useTheme();
+  const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
+
+  const toggleMenu = (label: string) => {
+    setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
 
   return (
     <List sx={{ px: collapsed ? 1 : 1.5, py: 0.5, flex: 1, overflow: 'auto' }}>
-      {navItems.map(({ label, icon, to }) => {
-        const selected = (to === paths.root && pathname === '/') || pathname === to;
+      {navItems.map(({ label, icon, to, subItems }) => {
+        const selected =
+          (to === paths.root && pathname === '/') ||
+          pathname === to ||
+          subItems?.some((s) => pathname === s.to);
+        const isOpen = !!openMenus[label];
 
         const button = (
           <ListItemButton
             key={to}
             selected={selected}
             onClick={() => {
-              nav(to);
-              onItemClick?.();
+              if (subItems) toggleMenu(label);
+              else {
+                nav(to);
+                onItemClick?.();
+              }
             }}
             sx={{
               my: 0.25,
@@ -65,21 +92,22 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
               color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
               transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: selected 
-                  ? alpha(theme.palette.primary.main, 0.15) 
-                  : alpha(theme.palette.action.hover, 0.10),
+                bgcolor: selected
+                  ? alpha(theme.palette.primary.main, 0.15)
+                  : alpha(theme.palette.action.hover, 0.1),
               },
             }}
           >
-            <ListItemIcon 
-              sx={{ 
-                minWidth: collapsed ? 0 : 40, 
+            <ListItemIcon
+              sx={{
+                minWidth: collapsed ? 0 : 40,
                 justifyContent: 'center',
                 color: 'inherit',
               }}
             >
               {icon}
             </ListItemIcon>
+
             {!collapsed && (
               <ListItemText
                 primary={label}
@@ -89,14 +117,65 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
                 }}
               />
             )}
+            {!collapsed && subItems && (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
           </ListItemButton>
         );
 
-        return collapsed ? (
-          <Tooltip key={to} title={label} placement="right" arrow>
-            {button}
-          </Tooltip>
-        ) : button;
+        return (
+          <Box key={label}>
+            {collapsed ? (
+              <Tooltip title={label} placement="right" arrow>
+                {button}
+              </Tooltip>
+            ) : (
+              button
+            )}
+
+            {!collapsed && subItems && (
+              <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {subItems.map((sub) => (
+                    <ListItemButton
+                      key={sub.to}
+                      selected={pathname === sub.to}
+                      onClick={() => {
+                        nav(sub.to);
+                        onItemClick?.();
+                      }}
+                      sx={{
+                        pl: 6,
+                        py: 0.75,
+                        minHeight: 36,
+                        borderRadius: 2,
+                        color:
+                          pathname === sub.to
+                            ? theme.palette.primary.main
+                            : theme.palette.text.secondary,
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        },
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 36,
+                          justifyContent: 'center',
+                          color: 'inherit',
+                        }}
+                      >
+                        {sub.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={sub.label}
+                        primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
+                      />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
+            )}
+          </Box>
+        );
       })}
     </List>
   );
@@ -113,10 +192,10 @@ export default function AppSidebar({
   const currentWidth = collapsed ? collapsedWidth : drawerWidth;
 
   const content = (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         height: '100vh',
-        display: 'flex', 
+        display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
       }}
@@ -149,23 +228,39 @@ export default function AppSidebar({
             D
           </Box>
         ) : (
-          <>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+            {/* ✅ Logo centralizada e responsiva */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                component="img"
+                src={logo}
+                alt="Logo"
+                sx={{
+                  mt: 1,
+                  height: 120,
+                  width: 'auto',
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+
+            {/* ✅ Botão de recolher alinhado à direita */}
             <IconButton
               onClick={toggleCollapsed}
               size="small"
               sx={{
-                display: { xs: 'none', md: 'flex' },
                 '&:hover': {
-                  bgcolor: alpha(theme.palette.action.hover, 0.5),
+                  bgcolor: alpha(theme.palette.action.hover, 0.1),
                 },
               }}
             >
               <ChevronLeftIcon fontSize="small" />
             </IconButton>
-          </>
+          </Stack>
         )}
       </Box>
 
+      {/* Botão de abrir quando recolhido */}
       {collapsed && (
         <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', pb: 1, flexShrink: 0 }}>
           <IconButton
@@ -173,7 +268,7 @@ export default function AppSidebar({
             size="small"
             sx={{
               '&:hover': {
-                bgcolor: alpha(theme.palette.action.hover, 0.5),
+                bgcolor: alpha(theme.palette.action.hover, 0.1),
               },
             }}
           >

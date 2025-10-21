@@ -1,7 +1,7 @@
 import api from '../api/client';
 import type {
   TaskListDto, TaskDetalhe, TaskCreateDto, TaskUpdateDto, TaskStatus
-} from '../types/tarefa';
+} from '../types/ordemservico';
 
 export async function listarTarefas(params?: {
   status?: TaskStatus | 'todas';

@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import api from "../api/client";
+import api from "../api/api";
 
-type User = { usuarioId: number; nome: string; cargo: string; empresaId: number; };
-type MultipleCompaniesError = { code: "MULTIPLE_COMPANIES"; empresas: { id: number; nome: string }[] };
+type User = {
+  id: number;
+  email: string;
+  nome: string;
+  tipo: string;
+  oficinaId: number; // ✅ vínculo direto com a oficina
+};
 
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string, remember: boolean) => Promise<void | MultipleCompaniesError>;
-  signInWithCompany: (email: string, password: string, empresaId: number, remember: boolean) => Promise<void>;
+  signIn: (email: string, password: string, remember: boolean) => Promise<void>;
   signOut: () => void;
 };
 
@@ -19,45 +23,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("driveon:token") ?? sessionStorage.getItem("driveon:token")
   );
+
   const [user, setUser] = useState<User | null>(() => {
     const raw = localStorage.getItem("driveon:user") ?? sessionStorage.getItem("driveon:user");
     return raw ? JSON.parse(raw) : null;
   });
 
+  // Persistência segura
   const persist = (t: string, u: User, remember: boolean) => {
-    const store = remember ? localStorage : sessionStorage;
-    store.setItem("driveon:token", t);
-    store.setItem("driveon:user", JSON.stringify(u));
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem("driveon:token", t);
+    storage.setItem("driveon:user", JSON.stringify(u));
     setToken(t);
     setUser(u);
+    api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
   };
 
+  // Login
   const signIn = async (email: string, password: string, remember: boolean) => {
-    const res = await api.post(
-      "/api/auth/login-email",
-      { email, password },
-      { validateStatus: s => (s >= 200 && s < 300) || s === 409 }
-    );
+    try {
+      const { data } = await api.post("/auth/login", { email, senha: password });
 
-    if (res.status === 200 && res.data?.token) {
-      const { token, usuarioId, nome, cargo, empresaId } = res.data;
-      persist(token, { usuarioId, nome, cargo, empresaId }, remember);
-      return;
+      const { token, usuario } = data;
+      const normalizedUser: User = {
+        id: usuario.id,
+        email: usuario.email,
+        nome: usuario.nome,
+        tipo: usuario.tipo,
+        oficinaId: usuario.oficinaId, // vem do backend
+      };
+
+      persist(token, normalizedUser, remember);
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || "E-mail ou senha inválidos.");
     }
-
-    if (res.status === 409 && res.data?.code === "MULTIPLE_COMPANIES") {
-      return { code: "MULTIPLE_COMPANIES", empresas: res.data.empresas };
-    }
-
-    throw new Error(typeof res.data === "string" ? res.data : "E-mail ou senha inválidos.");
   };
 
-  const signInWithCompany = async (email: string, password: string, empresaId: number, remember: boolean) => {
-    const { data } = await api.post("/api/auth/login", { email, password, empresaId });
-    const { token, usuarioId, nome, cargo, empresaId: empId } = data;
-    persist(token, { usuarioId, nome, cargo, empresaId: empId }, remember);
-  };
-
+  // Logout
   const signOut = () => {
     localStorage.removeItem("driveon:token");
     localStorage.removeItem("driveon:user");
@@ -65,11 +67,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem("driveon:user");
     setToken(null);
     setUser(null);
+    delete api.defaults.headers.common["Authorization"];
   };
 
-  const value = useMemo(() => ({
-    user, token, isAuthenticated: !!token, signIn, signInWithCompany, signOut
-  }), [user, token]);
+  // Setar header automaticamente se já logado
+  if (token && !api.defaults.headers.common["Authorization"]) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  }
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isAuthenticated: !!token,
+      signIn,
+      signOut,
+    }),
+    [user, token]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

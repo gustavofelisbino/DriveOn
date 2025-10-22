@@ -22,7 +22,6 @@ export default function ClientDetails() {
   const { id } = useParams();
   const { clients, setClients } = useClients();
 
-  // Diálogos
   const [openEdit, setOpenEdit] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
   const [openFinance, setOpenFinance] = React.useState(false);
@@ -51,7 +50,6 @@ export default function ClientDetails() {
         py: { xs: 3, md: 4 },
       }}
     >
-      {/* Header */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
         <Stack direction="row" spacing={2} alignItems="center">
           <IconButton
@@ -99,7 +97,6 @@ export default function ClientDetails() {
         <Tab label="Financeiro" />
       </Tabs>
 
-      {/* --- RESUMO --- */}
       <Fade in={tab === 0} unmountOnExit>
         <Box hidden={tab !== 0}>
           <Paper
@@ -172,7 +169,6 @@ export default function ClientDetails() {
         </Box>
       </Fade>
 
-      {/* --- CARROS --- */}
       <Fade in={tab === 1} unmountOnExit>
         <Box hidden={tab !== 1}>
           <Paper variant="outlined" sx={{ borderRadius: 3, p: 4 }}>
@@ -229,7 +225,6 @@ export default function ClientDetails() {
         </Box>
       </Fade>
 
-      {/* --- FINANCEIRO --- */}
       <Fade in={tab === 2} unmountOnExit>
         <Box hidden={tab !== 2}>
           <Paper variant="outlined" sx={{ borderRadius: 3, p: 4 }}>
@@ -297,7 +292,6 @@ export default function ClientDetails() {
         </Box>
       </Fade>
 
-      {/* Diálogos */}
       <ClientDialog
         open={openEdit}
         mode="edit"

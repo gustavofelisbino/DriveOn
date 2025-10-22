@@ -53,7 +53,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
       setDescricao(detail.descricao ?? '');
       setPrioridade(detail.prioridade);
       setStatus(detail.status);
-      setVenceEm(detail.venceEm ? detail.venceEm.slice(0, 16) : ''); // datetime-local
+      setVenceEm(detail.venceEm ? detail.venceEm.slice(0, 16) : '');
       setOsId(detail.ordemServicoId ?? '');
       setClienteId(detail.clienteId ?? '');
     }
@@ -96,7 +96,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
-      <DialogTitle sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.06) }}>
+      <DialogTitle sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.06)}}>
         {isCreate ? 'Nova Tarefa' : isEdit ? `Editar Tarefa #${detail?.id}` : `Tarefa #${detail?.id}`}
       </DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
@@ -150,7 +150,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TaskStatus)}
                 disabled={isView}
-                sx={{ minWidth: 180 }}
+                sx={{ minWidth: 140 }}
               >
                 {statusOptions.map((s) => (
                   <MenuItem key={s} value={s}>
@@ -174,7 +174,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
                   </InputAdornment>
                 ),
               }}
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: 160 }}
             />
           </Stack>
 
@@ -185,6 +185,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
               value={ordemServicoId}
               onChange={(e) => setOsId(e.target.value === '' ? '' : Number(e.target.value))}
               disabled={isView}
+              sx={{ minWidth: 270 }}
             />
             <TextField
               type="number"
@@ -192,6 +193,7 @@ export default function TaskDialog({ open, mode, detail, onClose, onCreate, onUp
               value={clienteId}
               onChange={(e) => setClienteId(e.target.value === '' ? '' : Number(e.target.value))}
               disabled={isView}
+              sx={{ minWidth: 265 }}
             />
           </Stack>
         </Stack>

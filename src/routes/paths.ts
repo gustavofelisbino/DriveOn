@@ -20,4 +20,7 @@ export const paths = {
     agendaRelatorio: '/relatorios/agenda',
     geralRelatorio: '/relatorios/geral',
     configuracoes: '/configuracoes',
+    veiculos: '/veiculos',
+    estoque: '/estoque',
+    fornecedores: '/fornecedores',
   } as const;

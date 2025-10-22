@@ -20,6 +20,9 @@ import FinanceiroRelatorio from '../modules/relatorios/pages/financeiro/financei
 import AgendaRelatorio from '../modules/relatorios/pages/agenda/agendarelatorio';
 import GeralRelatorio from '../modules/relatorios/pages/geral/geralrelatorio';
 import Configuracoes from '../modules/configuracoes/pages/configuracoes';
+import Veiculos from '../modules/veiculos/pages/veiculos';
+import Estoque from '../modules/estoque/pages/estoque';
+import SuppliersPage from '../modules/fornecedores/pages/fornecedores';
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -54,6 +57,9 @@ export default function Router() {
         <Route path={paths.agendaRelatorio} element={<AgendaRelatorio />} />
         <Route path={paths.geralRelatorio} element={<GeralRelatorio />} />
         <Route path={paths.configuracoes} element={<Configuracoes />} />
+        <Route path={paths.veiculos} element={<Veiculos />} />
+        <Route path={paths.estoque} element={<Estoque />} />
+        <Route path={paths.fornecedores} element={<SuppliersPage />} />
       </Route>
     </Routes>
   );

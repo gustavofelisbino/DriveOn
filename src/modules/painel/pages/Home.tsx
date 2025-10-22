@@ -22,7 +22,6 @@ import DialogCarro from '../dialog/carro';
 import DialogAgendamento from '../dialog/agendamento';
 import { useNavigate } from 'react-router-dom';
 
-// Mock inicial
 const initialTasks = [
   { title: 'Troca de vela - Civic 2009', date: '19/07/2025 às 13:10' },
   { title: 'Amortecedor traseiro - Civic 2009', date: '03/07/2025 às 10:45' },
@@ -37,7 +36,6 @@ const initialCars = [
 
 const initialClients = ['Gustavo', 'Maria', 'Pedro'];
 
-// Botão padrão estilizado
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
   return (
@@ -64,7 +62,6 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
   );
 }
 
-// Card de seção
 function SectionCard({
   title,
   icon,
@@ -130,7 +127,6 @@ function SectionCard({
   );
 }
 
-// Linha de lista
 function ListRow({
   title,
   subtitle,
@@ -184,7 +180,6 @@ export default function Home() {
   const totalSaidas = 4870;
   const saldo = totalEntradas - totalSaidas;
 
-  // limitar visualização a 4
   const visibleTasks = tasks.slice(0, 4);
   const visibleCars = cars.slice(0, 4);
   const visibleClients = clients.slice(0, 4);
@@ -198,7 +193,6 @@ export default function Home() {
         py: { xs: 3, sm: 3, md: 4 },
       }}
     >
-      {/* Header */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -224,7 +218,6 @@ export default function Home() {
         </Stack>
       </Stack>
 
-      {/* Cards Financeiros */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
         {/* Entradas */}
         <Paper
@@ -263,7 +256,6 @@ export default function Home() {
           </Stack>
         </Paper>
 
-        {/* Saídas */}
         <Paper
           elevation={0}
           sx={(t) => ({
@@ -300,7 +292,6 @@ export default function Home() {
           </Stack>
         </Paper>
 
-        {/* Saldo */}
         <Paper
           elevation={0}
           sx={(t) => ({
@@ -338,7 +329,6 @@ export default function Home() {
         </Paper>
       </Stack>
 
-      {/* Listas */}
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }}>
         {/* Atividades */}
         <SectionCard
@@ -368,7 +358,6 @@ export default function Home() {
           </Stack>
         </SectionCard>
 
-        {/* Carros */}
         <SectionCard
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
@@ -396,7 +385,6 @@ export default function Home() {
           </Stack>
         </SectionCard>
 
-        {/* Clientes */}
         <SectionCard
           title="Clientes"
           icon={<PersonOutlineIcon />}
@@ -425,7 +413,6 @@ export default function Home() {
         </SectionCard>
       </Stack>
 
-      {/* Diálogos */}
       <DialogAgendamento
         open={openTask}
         onClose={() => setOpenTask(false)}

@@ -95,7 +95,7 @@ function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: 
             render={({ field }) => (
               <TextField
                 {...field}
-                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // evita crash
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 label="Valor"
                 type="number"
                 placeholder="0,00"

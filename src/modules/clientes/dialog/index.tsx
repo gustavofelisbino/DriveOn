@@ -84,9 +84,10 @@ export default function ClientDialog({
   }, [open, initial]);
   const nameError  = touched && !name.trim();
   const emailError = touched && !!email && !emailPattern.test(email);
+  const phoneError = touched && normalizePhone(phone).length < 10;
   function handleSubmit() {
     setTouched(true);
-    if (nameError || emailError) return;
+    if (nameError || emailError || normalizePhone(phone).length < 10) return;
     const payload: ClientForm = {
       name: name.trim(),
       email: email.trim() || undefined,
@@ -198,12 +199,14 @@ export default function ClientDialog({
             </Grid>
             <Grid item xs={12} md={5}>
               <TextField
-                label="Telefone (opcional)"
+                label="Telefone"
                 placeholder="(11) 99999-9999"
                 value={formatPhoneVisual(phone)}
                 onChange={(e) => setPhone(e.target.value)}
                 size="small"
                 fullWidth
+                error={phoneError}
+                helperText={phoneError ? 'Informe um telefone válido' : ' '}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

@@ -29,7 +29,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Controller, useForm } from 'react-hook-form';
 import { required } from 'zod/mini';
 
-// ==================== Tipos ====================
 export type User = {
   id: string;
   firstName: string;
@@ -75,7 +74,6 @@ type Props = {
   onDelete?: (user: User) => void;
 };
 
-// ==================== Helpers ====================
 const maritalOptions = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)'];
 const genderOptions = ['Masculino', 'Feminino'];
 const brStates = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
@@ -109,7 +107,6 @@ function HeaderIcon({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ==================== Componente ====================
 export default function UserDialog({ open, mode, initial, onClose, onSubmit, onDelete }: Props) {
   const [tab, setTab] = React.useState(0);
   const [avatarPreview, setAvatarPreview] = React.useState<string | undefined>(initial?.avatarUrl);
@@ -118,7 +115,6 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
     formState: { errors, isValid, isSubmitting } } = useForm<UserForm>({
     mode: 'onChange',
     defaultValues: {
-      // pessoais
       firstName: initial?.firstName ?? '', lastName: initial?.lastName ?? '',
       email: initial?.email ?? '', phone: initial?.phone ?? '',
       birthDate: initial?.birthDate ? dayjs(initial.birthDate) : null,
@@ -127,16 +123,13 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
       street: initial?.address?.street ?? '', city: initial?.address?.city ?? '',
       state: initial?.address?.state ?? '', zip: initial?.address?.zip ?? '',
       avatarFile: null,
-      // profissionais
       role: initial?.job?.role ?? '', department: initial?.job?.department ?? '',
       hireDate: initial?.job?.hireDate ? dayjs(initial?.job?.hireDate) : null,
       employmentType: (initial?.job?.employmentType ?? 'CLT') as UserForm['employmentType'],
       salary: initial?.job?.salary ?? '', manager: initial?.job?.manager ?? '',
-      // documentos
       cpf: initial?.documents?.cpf ?? '', rg: initial?.documents?.rg ?? '',
       cnh: initial?.documents?.cnh ?? '',
       cnhExpiry: initial?.documents?.cnhExpiry ? dayjs(initial?.documents?.cnhExpiry) : null,
-      // acesso
       username: initial?.access?.username ?? initial?.email ?? '',
       profile: (initial?.access?.profile ?? 'Mecânico') as UserForm['profile'],
       active: initial?.access?.active ?? true,
@@ -167,12 +160,11 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
       cnhExpiry: initial?.documents?.cnhExpiry ? dayjs(initial?.documents?.cnhExpiry) : null,
       username: initial?.access?.username ?? initial?.email ?? '',
       profile: (initial?.access?.profile ?? 'Mecânico') as UserForm['profile'],
-      active: initial?.access?.active ?? true,
+      active: initial?.access?.active ?? false,
       requirePasswordReset: initial?.access?.requirePasswordReset ?? (mode === 'create'),
     });
   }, [open, initial, mode, reset]);
 
-  // sugere username = email
   const email = watch('email');
   React.useEffect(() => {
     if (email && !watch('username')) setValue('username', email);
@@ -190,7 +182,6 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="md"
         PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}>
-        {/* Header */}
         <Paper elevation={0} square sx={{
           px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           bgcolor: (t) => alpha(t.palette.primary.main, 0.06)
@@ -209,7 +200,6 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
           <IconButton onClick={onClose} size="small"><CloseRoundedIcon /></IconButton>
         </Paper>
 
-        {/* Tabs */}
         <Box sx={{ px: 2.5, pt: 1 }}>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" allowScrollButtonsMobile>
             <Tab icon={<PersonRoundedIcon />} iconPosition="start" label="Informações pessoais" />
@@ -513,7 +503,6 @@ export default function UserDialog({ open, mode, initial, onClose, onSubmit, onD
 
         <Divider />
 
-        {/* Footer */}
         <DialogActions sx={{ px: 3, py: 2 }}>
           {mode === 'edit' && onDelete && initial?.id && (
             <Button color="error" onClick={() => { onDelete(initial!); onClose(); }}>

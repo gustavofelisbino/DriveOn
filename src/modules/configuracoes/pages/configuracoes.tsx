@@ -30,7 +30,6 @@ export default function Configuracoes() {
   const [openSection, setOpenSection] = React.useState<Section | null>('empresa');
   const [editing, setEditing] = React.useState<Section | null>(null);
 
-  // Empresa
   const [empresa, setEmpresa] = React.useState({
     nome: 'DriveOn Auto Center',
     cnpj: '12.345.678/0001-90',
@@ -38,7 +37,6 @@ export default function Configuracoes() {
     endereco: 'Av. Brasil, 1200 - Criciúma/SC',
   });
 
-  // Agenda
   const [agenda, setAgenda] = React.useState({
     horarioInicio: '08:00',
     horarioFim: '18:00',
@@ -46,14 +44,12 @@ export default function Configuracoes() {
     tempoMedio: '60 minutos',
   });
 
-  // Financeiro
   const [financeiro, setFinanceiro] = React.useState({
     formasPagamento: 'Pix, Cartão, Dinheiro',
     emitirRecibos: true,
     jurosAtraso: '2%',
   });
 
-  // Notificações
   const [notificacoes, setNotificacoes] = React.useState({
     confirmarAgendamento: true,
     lembreteDias: 3,
@@ -102,7 +98,6 @@ export default function Configuracoes() {
           </Typography>
         </Stack>
 
-        {/* EMPRESA */}
         <SectionCard
           title="Empresa"
           icon={<BusinessRoundedIcon color="primary" />}
@@ -132,7 +127,6 @@ export default function Configuracoes() {
           )}
         </SectionCard>
 
-        {/* AGENDA */}
         <SectionCard
           title="Agenda"
           icon={<CalendarMonthRoundedIcon color="primary" />}
@@ -161,7 +155,6 @@ export default function Configuracoes() {
           )}
         </SectionCard>
 
-        {/* FINANCEIRO */}
         <SectionCard
           title="Financeiro"
           icon={<PaymentsRoundedIcon color="primary" />}
@@ -203,7 +196,6 @@ export default function Configuracoes() {
           )}
         </SectionCard>
 
-        {/* NOTIFICAÇÕES */}
         <SectionCard
           title="Notificações"
           icon={<NotificationsRoundedIcon color="primary" />}
@@ -253,8 +245,6 @@ export default function Configuracoes() {
     </Box>
   );
 }
-
-/* ---------------- Componentes auxiliares ---------------- */
 
 function SectionCard({ title, icon, open, onToggle, onEdit, editing, onCancel, onSave, children }: any) {
   return (

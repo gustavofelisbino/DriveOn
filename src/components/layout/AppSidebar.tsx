@@ -23,7 +23,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { paths } from '../../routes/paths';
 import { useSidebar } from '../../context/SidebarContext';
 import { useState } from 'react';
-import logo from '../../assets/logo.png'; // ✅ já importada
+import logo from '../../assets/logo.png'; 
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import StoreIcon from '@mui/icons-material/Store';
 
 type Props = {
   drawerWidth: number;
@@ -35,6 +38,8 @@ const navItems = [
   { label: 'Início', icon: <HomeOutlineIcon />, to: paths.root },
   { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },
   { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },
+  { label: 'Veículos', icon: <DirectionsCarIcon />, to: paths.veiculos },
+  { label: 'Estoque', icon: <InventoryIcon />, to: paths.estoque },
   { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },
   {
     label: 'Pagamentos',
@@ -46,6 +51,7 @@ const navItems = [
       { label: 'Contas a pagar', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
     ]
   },
+  { label: 'Fornecedores', icon: <StoreIcon />, to: paths.fornecedores },
   { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },
   { label: 'Usuários', icon: <PersonOutlineIcon />, to: paths.users },
   { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },

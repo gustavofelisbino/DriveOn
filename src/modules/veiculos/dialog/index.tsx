@@ -67,14 +67,12 @@ export default function VehicleDialog({
   const [placa, setPlaca] = React.useState(initial?.placa ?? "");
   const [cor, setCor] = React.useState(initial?.cor ?? "");
 
-  // carregar clientes
   React.useEffect(() => {
     listarClientes().then((data: any) => {
       setClientes(data.map((c: any) => ({ id: c.id, nome: c.nome })));
     });
   }, []);
 
-  // resetar dados quando abrir
   React.useEffect(() => {
     if (!open) return;
     setMarca(initial?.marca ?? "");
@@ -86,10 +84,11 @@ export default function VehicleDialog({
   }, [open, initial]);
 
   const handleSubmit = () => {
-    if (!clienteId || !marca.trim() || !modelo.trim() || !placa.trim()) {
-      alert("Preencha todos os campos obrigatórios");
+    if (!clienteId || clienteId === 0 || !marca.trim() || !modelo.trim() || !placa.trim()) {
+      alert("Selecione um cliente e preencha todos os campos obrigatórios.");
       return;
     }
+
     onSubmit({
       cliente_id: clienteId,
       marca: marca.trim(),
@@ -109,7 +108,7 @@ export default function VehicleDialog({
       maxWidth="md"
       PaperProps={{
         sx: {
-          borderRadius: 4,
+          borderRadius: 2,
           overflow: "hidden",
           boxShadow: (t) => `0 8px 32px ${alpha(t.palette.primary.main, 0.25)}`,
         },
@@ -126,7 +125,6 @@ export default function VehicleDialog({
           alignItems: "center",
           justifyContent: "space-between",
           bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
-          backdropFilter: "blur(6px)",
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center">
@@ -157,7 +155,6 @@ export default function VehicleDialog({
         }}
       >
         <Grid container spacing={2.5}>
-          {/* Cliente */}
           <Grid item xs={12} sm={6} md={4}>
             <TextField
               select
@@ -166,13 +163,6 @@ export default function VehicleDialog({
               onChange={(e) => setClienteId(Number(e.target.value))}
               size="small"
               fullWidth
-              sx={{
-                "& .MuiSelect-select": {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                },
-              }}
             >
               <MenuItem value={0} disabled>
                 Selecione um cliente
@@ -185,7 +175,6 @@ export default function VehicleDialog({
             </TextField>
           </Grid>
 
-          {/* Marca */}
           <Grid item xs={12} sm={6} md={4}>
             <TextField
               label="Marca"
@@ -203,7 +192,6 @@ export default function VehicleDialog({
             />
           </Grid>
 
-          {/* Modelo */}
           <Grid item xs={12} sm={6} md={4}>
             <TextField
               label="Modelo"
@@ -221,7 +209,6 @@ export default function VehicleDialog({
             />
           </Grid>
 
-          {/* Ano */}
           <Grid item xs={12} sm={4}>
             <TextField
               label="Ano"
@@ -240,7 +227,6 @@ export default function VehicleDialog({
             />
           </Grid>
 
-          {/* Placa */}
           <Grid item xs={12} sm={4}>
             <TextField
               label="Placa"
@@ -258,7 +244,6 @@ export default function VehicleDialog({
             />
           </Grid>
 
-          {/* Cor */}
           <Grid item xs={12} sm={4}>
             <TextField
               label="Cor"
@@ -288,13 +273,7 @@ export default function VehicleDialog({
         }}
       >
         {mode === "edit" && onDelete && initial?.id && (
-          <Button
-            color="error"
-            onClick={() => {
-              onDelete(initial!);
-              onClose();
-            }}
-          >
+          <Button color="error" onClick={() => onDelete(initial!)}>
             Excluir
           </Button>
         )}
@@ -322,7 +301,6 @@ function HeaderIcon({ children }: { children: React.ReactNode }) {
         placeItems: "center",
         bgcolor: (t) => alpha(t.palette.primary.main, 0.2),
         color: "primary.main",
-        flexShrink: 0,
       }}
     >
       {children}

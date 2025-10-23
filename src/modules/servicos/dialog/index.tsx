@@ -5,33 +5,30 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
-import NumbersRoundedIcon from "@mui/icons-material/NumbersRounded";
 
-export type EstoqueItem = {
-  id: string;
+export type Servico = {
+  id: number;
   nome: string;
   descricao?: string;
-  preco_custo: number;
-  preco_venda: number;
-  estoque: number;
-  createdAt: string;
+  preco: number;
+  created_at: string;
 };
 
-export type EstoqueForm = Omit<EstoqueItem, "id" | "createdAt">;
+export type ServicoForm = Omit<Servico, "id" | "created_at">;
 
 type Props = {
   open: boolean;
   mode: "create" | "edit";
-  initial?: EstoqueItem | null;
+  initial?: Servico | null;
   onClose: () => void;
-  onSubmit: (data: EstoqueForm) => void;
-  onDelete?: (item: EstoqueItem) => void;
+  onSubmit: (data: ServicoForm) => void;
+  onDelete?: (item: Servico) => void;
 };
 
-export default function EstoqueDialog({
+export default function ServicoDialog({
   open,
   mode,
   initial,
@@ -39,12 +36,10 @@ export default function EstoqueDialog({
   onSubmit,
   onDelete,
 }: Props) {
-  const [form, setForm] = React.useState<EstoqueForm>({
+  const [form, setForm] = React.useState<ServicoForm>({
     nome: "",
     descricao: "",
-    preco_custo: 0,
-    preco_venda: 0,
-    estoque: 0,
+    preco: 0,
   });
 
   React.useEffect(() => {
@@ -52,23 +47,24 @@ export default function EstoqueDialog({
     setForm({
       nome: initial?.nome ?? "",
       descricao: initial?.descricao ?? "",
-      preco_custo: initial?.preco_custo ?? 0,
-      preco_venda: initial?.preco_venda ?? 0,
-      estoque: initial?.estoque ?? 0,
+      preco: initial?.preco ?? 0,
     });
   }, [open, initial]);
 
-  const handleChange = (field: keyof EstoqueForm, value: string | number) =>
+  const handleChange = (field: keyof ServicoForm, value: string | number) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = () => {
-    if (!form.nome.trim()) return;
+    if (!form.nome.trim()) {
+      alert("Informe o nome do serviço.");
+      return;
+    }
     onSubmit(form);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md"
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm"
       PaperProps={{ sx: { borderRadius: 2, overflow: "hidden" } }}>
       <Paper
         elevation={0}
@@ -79,13 +75,13 @@ export default function EstoqueDialog({
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center">
-          <HeaderIcon><Inventory2RoundedIcon /></HeaderIcon>
+          <HeaderIcon><BuildRoundedIcon /></HeaderIcon>
           <Stack spacing={0}>
             <Typography variant="subtitle1" fontWeight={800}>
-              {mode === "create" ? "Novo item de estoque" : "Editar item"}
+              {mode === "create" ? "Novo serviço" : "Editar serviço"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Preencha as informações do produto/peça
+              Preencha as informações do serviço
             </Typography>
           </Stack>
         </Stack>
@@ -103,7 +99,7 @@ export default function EstoqueDialog({
               onChange={(e) => handleChange("nome", e.target.value)}
               size="small"
               fullWidth
-              InputProps={{ startAdornment: <InputAdornment position="start"><Inventory2RoundedIcon fontSize="small" /></InputAdornment> }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><BuildRoundedIcon fontSize="small" /></InputAdornment> }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -119,35 +115,13 @@ export default function EstoqueDialog({
           </Grid>
           <Grid item xs={12} md={6}>
             <TextField
-              label="Preço de custo (R$)"
+              label="Preço (R$)"
               type="number"
-              value={form.preco_custo}
-              onChange={(e) => handleChange("preco_custo", parseFloat(e.target.value))}
+              value={form.preco}
+              onChange={(e) => handleChange("preco", parseFloat(e.target.value))}
               size="small"
               fullWidth
               InputProps={{ startAdornment: <InputAdornment position="start"><PaidRoundedIcon fontSize="small" /></InputAdornment> }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              label="Preço de venda (R$)"
-              type="number"
-              value={form.preco_venda}
-              onChange={(e) => handleChange("preco_venda", parseFloat(e.target.value))}
-              size="small"
-              fullWidth
-              InputProps={{ startAdornment: <InputAdornment position="start"><PaidRoundedIcon fontSize="small" /></InputAdornment> }}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              label="Estoque"
-              type="number"
-              value={form.estoque}
-              onChange={(e) => handleChange("estoque", parseInt(e.target.value))}
-              size="small"
-              fullWidth
-              InputProps={{ startAdornment: <InputAdornment position="start"><NumbersRoundedIcon fontSize="small" /></InputAdornment> }}
             />
           </Grid>
         </Grid>

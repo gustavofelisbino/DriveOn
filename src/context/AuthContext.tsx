@@ -6,7 +6,7 @@ type User = {
   email: string;
   nome: string;
   tipo: string;
-  oficinaId: number; // ✅ vínculo direto com a oficina
+  oficinaId: number;
 };
 
 type AuthContextType = {
@@ -29,7 +29,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return raw ? JSON.parse(raw) : null;
   });
 
-  // Persistência segura
+  const normalizeUser = (u: any): User => ({
+    id: u.id,
+    email: u.email,
+    nome: u.nome,
+    tipo: u.tipo,
+    oficinaId: Number(u.oficinaId ?? u.oficina_id ?? 0),
+  });
+
   const persist = (t: string, u: User, remember: boolean) => {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem("driveon:token", t);
@@ -39,27 +46,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
   };
 
-  // Login
   const signIn = async (email: string, password: string, remember: boolean) => {
-    try {
-      const { data } = await api.post("/auth/login", { email, senha: password });
-
-      const { token, usuario } = data;
-      const normalizedUser: User = {
-        id: usuario.id,
-        email: usuario.email,
-        nome: usuario.nome,
-        tipo: usuario.tipo,
-        oficinaId: usuario.oficinaId, // vem do backend
-      };
-
-      persist(token, normalizedUser, remember);
-    } catch (err: any) {
-      throw new Error(err.response?.data?.message || "E-mail ou senha inválidos.");
-    }
+    const { data } = await api.post("/auth/login", { email, senha: password });
+    const normalized = normalizeUser(data.usuario);
+    persist(data.token, normalized, remember);
   };
 
-  // Logout
   const signOut = () => {
     localStorage.removeItem("driveon:token");
     localStorage.removeItem("driveon:user");
@@ -70,7 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common["Authorization"];
   };
 
-  // Setar header automaticamente se já logado
   if (token && !api.defaults.headers.common["Authorization"]) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }

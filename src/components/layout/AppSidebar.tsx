@@ -27,6 +27,7 @@ import logo from '../../assets/logo.png';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import StoreIcon from '@mui/icons-material/Store';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 
 type Props = {
   drawerWidth: number;
@@ -40,6 +41,7 @@ const navItems = [
   { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },
   { label: 'Veículos', icon: <DirectionsCarIcon />, to: paths.veiculos },
   { label: 'Estoque', icon: <InventoryIcon />, to: paths.estoque },
+  { label: 'Serviços', icon: <MiscellaneousServicesIcon />, to: paths.servicos },
   { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },
   {
     label: 'Pagamentos',
@@ -206,7 +208,6 @@ export default function AppSidebar({
         overflow: 'hidden',
       }}
     >
-      {/* Logo Section */}
       <Box
         sx={{
           p: 2,
@@ -235,7 +236,6 @@ export default function AppSidebar({
           </Box>
         ) : (
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-            {/* ✅ Logo centralizada e responsiva */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box
                 component="img"
@@ -249,8 +249,6 @@ export default function AppSidebar({
                 }}
               />
             </Box>
-
-            {/* ✅ Botão de recolher alinhado à direita */}
             <IconButton
               onClick={toggleCollapsed}
               size="small"
@@ -265,8 +263,6 @@ export default function AppSidebar({
           </Stack>
         )}
       </Box>
-
-      {/* Botão de abrir quando recolhido */}
       {collapsed && (
         <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', pb: 1, flexShrink: 0 }}>
           <IconButton
@@ -284,15 +280,12 @@ export default function AppSidebar({
       )}
 
       <Divider sx={{ flexShrink: 0 }} />
-
-      {/* Navigation */}
       <NavList onItemClick={onCloseMobile} collapsed={collapsed} />
     </Box>
   );
 
   return (
     <>
-      {/* Mobile Drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -311,8 +304,6 @@ export default function AppSidebar({
       >
         {content}
       </Drawer>
-
-      {/* Desktop Drawer */}
       <Drawer
         variant="permanent"
         open

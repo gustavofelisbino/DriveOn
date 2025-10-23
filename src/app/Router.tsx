@@ -20,9 +20,11 @@ import FinanceiroRelatorio from '../modules/relatorios/pages/financeiro/financei
 import AgendaRelatorio from '../modules/relatorios/pages/agenda/agendarelatorio';
 import GeralRelatorio from '../modules/relatorios/pages/geral/geralrelatorio';
 import Configuracoes from '../modules/configuracoes/pages/configuracoes';
-import Veiculos from '../modules/veiculos/pages/veiculos';
+import Veiculos from '../modules/veiculos/pages/veiculos'
 import Estoque from '../modules/estoque/pages/estoque';
-import SuppliersPage from '../modules/fornecedores/pages/fornecedores';
+import Fornecedores from '../modules/fornecedores/pages/fornecedores';
+import Servicos from '../modules/servicos/pages/servicos';
+import OrdemServicoDetalhes from '../modules/tarefas/pages/detalhesos/ordemservicodetalhes';
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -59,7 +61,9 @@ export default function Router() {
         <Route path={paths.configuracoes} element={<Configuracoes />} />
         <Route path={paths.veiculos} element={<Veiculos />} />
         <Route path={paths.estoque} element={<Estoque />} />
-        <Route path={paths.fornecedores} element={<SuppliersPage />} />
+        <Route path={paths.fornecedores} element={<Fornecedores />} />
+        <Route path={paths.servicos} element={<Servicos />} />
+        <Route path={paths.ordemServicoDetalhes} element={<OrdemServicoDetalhes />} />
       </Route>
     </Routes>
   );

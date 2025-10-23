@@ -10,7 +10,6 @@ import {
   Button,
   Collapse,
   Switch,
-  MenuItem,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';

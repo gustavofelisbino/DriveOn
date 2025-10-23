@@ -7,29 +7,29 @@ import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
-import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
 import { useAuth } from "../../../context/AuthContext";
-import EstoqueDialog, { type EstoqueItem, type EstoqueForm } from "../dialog";
+import ServicoDialog, { type Servico, type ServicoForm } from "../dialog";
 import {
-  listarEstoque,
-  criarEstoque,
-  atualizarEstoque,
-  excluirEstoque,
+  listarServicos,
+  criarServico,
+  atualizarServico,
+  excluirServico,
 } from "../api/api";
 
-export default function EstoquePage() {
+export default function ServicosPage() {
   const { user } = useAuth();
   const [query, setQuery] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [current, setCurrent] = React.useState<EstoqueItem | null>(null);
-  const [rows, setRows] = React.useState<EstoqueItem[]>([]);
+  const [current, setCurrent] = React.useState<Servico | null>(null);
+  const [rows, setRows] = React.useState<Servico[]>([]);
 
   React.useEffect(() => {
-    listarEstoque()
+    listarServicos()
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar estoque:", err));
+      .catch((err) => console.error("Erro ao carregar serviços:", err));
   }, []);
 
   const openCreate = () => {
@@ -38,42 +38,38 @@ export default function EstoquePage() {
     setOpenDialog(true);
   };
 
-  const openEdit = (item: EstoqueItem) => {
+  const openEdit = (s: Servico) => {
     setMode("edit");
-    setCurrent(item);
+    setCurrent(s);
     setOpenDialog(true);
   };
 
-  const onSubmit = async (data: EstoqueForm) => {
+  const onSubmit = async (data: ServicoForm) => {
     try {
-      const oficinaId = user?.oficinaId ?? user?.oficina_id ?? 0;
-      if (!oficinaId) {
-        alert("Usuário sem oficina vinculada. Refaça o login.");
-        console.error("❌ Usuário logado sem oficinaId:", user);
+      if (!user?.oficinaId) {
+        alert("Usuário sem oficina vinculada.");
         return;
       }
-
       if (mode === "create") {
-        console.log("🛰️ Criando item de estoque com oficinaId =", oficinaId);
-        const novo = await criarEstoque(data, oficinaId);
+        const novo = await criarServico(data, user.oficinaId);
         setRows((p) => [novo, ...p]);
       } else if (current) {
-        const atualizado = await atualizarEstoque(Number(current.id), data);
+        const atualizado = await atualizarServico(current.id, data);
         setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
       }
       setOpenDialog(false);
-    } catch (err: any) {
-      console.error("Erro ao salvar item:", err);
-      alert(err.response?.data?.message || "Erro ao salvar item.");
+    } catch (err) {
+      console.error("Erro ao salvar serviço:", err);
+      alert("Erro ao salvar serviço. Veja o console para detalhes.");
     }
   };
 
   const onDelete = async (id: number) => {
     try {
-      await excluirEstoque(id);
+      await excluirServico(id);
       setRows((p) => p.filter((x) => x.id !== id));
     } catch (err) {
-      console.error("Erro ao excluir item:", err);
+      console.error("Erro ao excluir serviço:", err);
     }
   };
 
@@ -88,19 +84,18 @@ export default function EstoquePage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      {/* Header */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
         <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Estoque</Typography>
+          <Typography variant="h5" fontWeight={700}>Serviços</Typography>
           <Typography variant="body2" color="text.secondary">
-            Gerencie as peças e produtos da oficina
+            Gerencie os serviços disponíveis na sua oficina
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1.5}>
           <TextField
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Pesquisar item"
+            placeholder="Pesquisar serviço"
             size="small"
             sx={{
               minWidth: 300,
@@ -115,12 +110,11 @@ export default function EstoquePage() {
             }}
           />
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} sx={{ borderRadius: 2 }}>
-            Novo item
+            Novo serviço
           </Button>
         </Stack>
       </Stack>
 
-      {/* Lista */}
       <Stack spacing={1.5}>
         {filtered.length === 0 ? (
           <Paper
@@ -132,38 +126,37 @@ export default function EstoquePage() {
               bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
             }}
           >
-            <Typography fontWeight={600}>Nenhum item encontrado</Typography>
+            <Typography fontWeight={600}>Nenhum serviço encontrado</Typography>
             <Typography variant="body2" color="text.secondary">
-              Ajuste a pesquisa ou cadastre um novo item de estoque.
+              Ajuste a pesquisa ou cadastre um novo serviço.
             </Typography>
           </Paper>
         ) : (
-          filtered.map((i) => (
-            <EstoqueCard key={i.id} i={i} onEdit={openEdit} onDelete={onDelete} />
+          filtered.map((s) => (
+            <ServicoCard key={s.id} s={s} onEdit={openEdit} onDelete={onDelete} />
           ))
         )}
       </Stack>
 
-      {/* Dialog */}
-      <EstoqueDialog
+      <ServicoDialog
         open={openDialog}
         mode={mode}
         initial={current}
         onClose={() => setOpenDialog(false)}
         onSubmit={onSubmit}
-        onDelete={(i) => onDelete(i.id)}
+        onDelete={(s) => onDelete(s.id)}
       />
     </Box>
   );
 }
 
-function EstoqueCard({
-  i,
+function ServicoCard({
+  s,
   onEdit,
   onDelete,
 }: {
-  i: EstoqueItem;
-  onEdit: (i: EstoqueItem) => void;
+  s: Servico;
+  onEdit: (s: Servico) => void;
   onDelete: (id: number) => void;
 }) {
   const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
@@ -181,30 +174,20 @@ function EstoqueCard({
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
-          <Inventory2RoundedIcon color="primary" />
+          <BuildRoundedIcon color="primary" />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle2" fontWeight={700} noWrap>
-              {i.nome}
+              {s.nome}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
-              {i.descricao || "Sem descrição"}
+              {s.descricao || "Sem descrição"}
             </Typography>
           </Box>
         </Stack>
         <Stack direction="row" alignItems="center" spacing={3}>
           <Stack spacing={0} alignItems="flex-end">
-            <Typography variant="body2" color="text.secondary">Custo</Typography>
-            <Typography variant="subtitle2">R$ {Number(i.preco_custo).toFixed(2)}</Typography>
-          </Stack>
-          <Stack spacing={0} alignItems="flex-end">
-            <Typography variant="body2" color="text.secondary">Venda</Typography>
-            <Typography variant="subtitle2" color="success.main">R$ {Number(i.preco_venda).toFixed(2)}</Typography>
-          </Stack>
-          <Stack spacing={0} alignItems="flex-end">
-            <Typography variant="body2" color="text.secondary">Estoque</Typography>
-            <Typography variant="subtitle2" color={i.estoque_qtd > 0 ? "primary.main" : "error.main"}>
-              {i.estoque_qtd}
-            </Typography>
+            <Typography variant="body2" color="text.secondary">Preço</Typography>
+            <Typography variant="subtitle2" color="success.main">R$ {Number(s.preco).toFixed(2)}</Typography>
           </Stack>
         </Stack>
         <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
@@ -216,9 +199,9 @@ function EstoqueCard({
           onClose={() => setAnchor(null)}
           PaperProps={{ sx: { mt: 1, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` } }}
         >
-          <MenuItem onClick={() => { setAnchor(null); onEdit(i); }}>Editar</MenuItem>
+          <MenuItem onClick={() => { setAnchor(null); onEdit(s); }}>Editar</MenuItem>
           <Divider />
-          <MenuItem onClick={() => { setAnchor(null); onDelete(i.id); }} sx={{ color: "error.main" }}>
+          <MenuItem onClick={() => { setAnchor(null); onDelete(s.id); }} sx={{ color: "error.main" }}>
             Excluir
           </MenuItem>
         </Menu>

@@ -6,10 +6,10 @@ export type TaskListDto = {
   titulo: string;
   status: TaskStatus;
   prioridade: TaskPriority;
-  venceEm?: string | null;     // ISO
+  venceEm?: string | null;
   ordemServicoId?: number | null;
   clienteId?: number | null;
-  criadoEm: string;            // ISO
+  criadoEm: string;
 };
 
 export type TaskDetalhe = {
@@ -18,18 +18,18 @@ export type TaskDetalhe = {
   descricao?: string | null;
   status: TaskStatus;
   prioridade: TaskPriority;
-  venceEm?: string | null;     // ISO
+  venceEm?: string | null;
   ordemServicoId?: number | null;
   clienteId?: number | null;
-  criadoEm: string;            // ISO
-  atualizadoEm: string;        // ISO
+  criadoEm: string;
+  atualizadoEm: string;
 };
 
 export type TaskCreateDto = {
   titulo: string;
   descricao?: string;
   prioridade: TaskPriority;
-  venceEm?: string | null;     // ISO (datetime)
+  venceEm?: string | null;
   ordemServicoId?: number | null;
   clienteId?: number | null;
 };

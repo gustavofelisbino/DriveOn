@@ -29,6 +29,19 @@ export type Client = {
   plan?: 'Permanent' | 'Trial' | 'Inactive';
   avatar?: string;
   createdAt: string;
+  cars?: Array<{
+    id: string;
+    model: string;
+    year: number;
+    plate: string;
+  }>;
+  finance?: Array<{
+    id: string;
+    desc: string;
+    data: string;
+    tipo: 'entrada' | 'saida';
+    valor: number;
+  }>;
 };
 export type ClientForm = {
   name: string;
@@ -114,7 +127,7 @@ export default function ClientDialog({
         onClose={onClose}
         fullWidth
         maxWidth="md"
-        PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}
+        PaperProps={{ sx: { borderRadius: 2, overflow: 'hidden' } }}
       >
         {}
         <Paper
@@ -122,7 +135,7 @@ export default function ClientDialog({
           square
           sx={{
             px: 3,
-            py: 2,
+            py: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -146,10 +159,10 @@ export default function ClientDialog({
             <CloseRoundedIcon />
           </IconButton>
         </Paper>
-        <DialogContent sx={{ px: 4, pt: 2, pb: 1 }}>
+        <DialogContent sx={{ px: 4, pt: 1, pb: 1 }}>
           {}
           <Typography variant="overline" color="text.secondary">Dados básicos</Typography>
-          <Grid container spacing={2} mt={0.25} mb={0.5}>
+          <Grid container spacing={2} mt={0.25} mb={0}>
             <Grid item xs={12} md={7}>
               <TextField
                 label="Nome"
@@ -175,10 +188,6 @@ export default function ClientDialog({
                 <MenuItem value="Inactive">Inativo</MenuItem>
               </TextField>
             </Grid>
-          </Grid>
-          {}
-          <Typography variant="overline" color="text.secondary">Contato</Typography>
-          <Grid container spacing={2} mt={2} mb={1.5}>
             <Grid item xs={12} md={7}>
               <TextField
                 label="E-mail (opcional)"
@@ -218,35 +227,7 @@ export default function ClientDialog({
             </Grid>
           </Grid>
           {}
-          <Typography variant="overline" color="text.secondary">Veículo / outros</Typography>
           <Grid container spacing={2} mt={0.25}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Modelo do carro (opcional)"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                size="small"
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <DirectionsCarFilledRoundedIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={6} md={2.5}>
-              <TextField
-                type="number"
-                label="Ano (opcional)"
-                value={year}
-                onChange={(e) => setYear(e.target.value === '' ? '' : Number(e.target.value))}
-                size="small"
-                fullWidth
-                inputProps={{ min: 1900, max: 2100 }}
-              />
-            </Grid>
             <Grid item xs={6} md={3.5}>
               <DatePicker
                 label="Data de nascimento (opcional)"
@@ -276,7 +257,6 @@ export default function ClientDialog({
                 size="small"
                 fullWidth
                 multiline
-                minRows={3}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

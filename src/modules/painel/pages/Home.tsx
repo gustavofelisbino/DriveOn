@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   Box,
   Paper,
@@ -6,35 +6,22 @@ import {
   Typography,
   Button,
   IconButton,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
-import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
-import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-
-import DialogCarro from '../dialog/carro';
-import DialogAgendamento from '../dialog/agendamento';
-import { useNavigate } from 'react-router-dom';
-
-const initialTasks = [
-  { title: 'Troca de vela - Civic 2009', date: '19/07/2025 às 13:10' },
-  { title: 'Amortecedor traseiro - Civic 2009', date: '03/07/2025 às 10:45' },
-  { title: 'Revisão geral - Peugeot 208 2014', date: '02/07/2025 às 17:00' },
-];
-
-const initialCars = [
-  'Chevrolet Astra - 2003',
-  'Mitsubishi ASX - 2015',
-  'Peugeot 208 - 2014',
-];
-
-const initialClients = ['Gustavo', 'Maria', 'Pedro'];
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import { useNavigate } from "react-router-dom";
+import api from "../../../api/api";
+import DialogCarro from "../../veiculos/dialog/";
+import DialogAgendamento from "../../tarefas/dialog/";
+import DialogCliente from "../../clientes/dialog/";
 
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
@@ -46,15 +33,15 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
         borderRadius: 2.5,
         px: 2.5,
         py: 1,
-        bgcolor: 'primary.main',
-        color: 'white',
+        bgcolor: "primary.main",
+        color: "white",
         fontWeight: 600,
-        textTransform: 'none',
+        textTransform: "none",
         fontSize: 13,
-        boxShadow: 'none',
-        '&:hover': {
-          bgcolor: 'primary.dark',
-          boxShadow: 'none',
+        boxShadow: "none",
+        "&:hover": {
+          bgcolor: "primary.dark",
+          boxShadow: "none",
         },
         ...sx,
       }}
@@ -82,7 +69,7 @@ function SectionCard({
         p: { xs: 2.5, md: 3 },
         borderRadius: 3,
         border: `1px solid ${theme.palette.divider}`,
-        bgcolor: 'background.paper',
+        bgcolor: "background.paper",
         flex: 1,
         minWidth: 0,
       })}
@@ -95,10 +82,10 @@ function SectionCard({
                 width: 44,
                 height: 44,
                 borderRadius: 2.5,
-                display: 'grid',
-                placeItems: 'center',
+                display: "grid",
+                placeItems: "center",
                 bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                color: 'primary.main',
+                color: "primary.main",
                 flexShrink: 0,
               }}
             >
@@ -114,7 +101,7 @@ function SectionCard({
                   color="text.secondary"
                   sx={{ fontSize: 12, fontWeight: 500 }}
                 >
-                  {count} {count === 1 ? 'item' : 'itens'}
+                  {count} {count === 1 ? "item" : "itens"}
                 </Typography>
               )}
             </Stack>
@@ -127,13 +114,7 @@ function SectionCard({
   );
 }
 
-function ListRow({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle?: string;
-}) {
+function ListRow({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <Stack
       direction="row"
@@ -144,7 +125,7 @@ function ListRow({
         py: 1.25,
         px: 1.25,
         borderRadius: 2,
-        '&:hover': {
+        "&:hover": {
           bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
         },
       }}
@@ -169,33 +150,49 @@ function ListRow({
 }
 
 export default function Home() {
-  const [tasks, setTasks] = React.useState(initialTasks);
-  const [cars, setCars] = React.useState(initialCars);
-  const [clients, setClients] = React.useState(initialClients);
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [cars, setCars] = React.useState<any[]>([]);
+  const [clients, setClients] = React.useState<any[]>([]);
   const [openTask, setOpenTask] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
+  const [openClient, setOpenClient] = React.useState(false);
   const nav = useNavigate();
 
   const totalEntradas = 8650;
   const totalSaidas = 4870;
   const saldo = totalEntradas - totalSaidas;
 
-  const visibleTasks = tasks.slice(0, 4);
-  const visibleCars = cars.slice(0, 4);
-  const visibleClients = clients.slice(0, 4);
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [resTasks, resCars, resClients] = await Promise.all([
+          api.get("/ordens"),
+          api.get("/veiculos"),
+          api.get("/clientes"),
+        ]);
+        setTasks(resTasks.data);
+        setCars(resCars.data);
+        setClients(resClients.data);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
     <Box
       sx={{
         maxWidth: 1600,
-        mx: 'auto',
+        mx: "auto",
         px: { xs: 2, sm: 3, md: 4, lg: 6 },
         py: { xs: 3, sm: 3, md: 4 },
       }}
     >
+      {/* Cabeçalho */}
       <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
         justifyContent="space-between"
         mb={{ xs: 3, md: 4 }}
         spacing={{ xs: 2, sm: 0 }}
@@ -209,234 +206,157 @@ export default function Home() {
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
-          <IconButton sx={{ bgcolor: 'action.hover' }}>
+          <IconButton sx={{ bgcolor: "action.hover" }}>
             <TrendingUpIcon />
           </IconButton>
-          <IconButton sx={{ bgcolor: 'action.hover' }}>
+          <IconButton sx={{ bgcolor: "action.hover" }}>
             <MoreHorizRoundedIcon />
           </IconButton>
         </Stack>
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
-        {/* Entradas */}
-        <Paper
-          elevation={0}
-          sx={(t) => ({
-            flex: 1,
-            borderRadius: 2,
-            p: 4,
-            border: `1px solid ${t.palette.divider}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: 'background.paper',
-          })}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box
-              sx={{
-                width: 46,
-                height: 46,
-                borderRadius: 2,
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: (t) => alpha(t.palette.success.main, 0.1),
-                color: 'success.main',
-              }}
-            >
-              <ArrowDownwardRoundedIcon />
-            </Box>
-            <Stack>
-              <Typography fontWeight={700}>Entradas</Typography>
-              <Typography variant="body2" color="text.secondary">
-                R$ {totalEntradas.toFixed(2)}
-              </Typography>
+      {/* Resumo financeiro */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
+        {[{
+          title: "Entradas",
+          value: totalEntradas,
+          icon: <ArrowDownwardRoundedIcon />,
+          color: "success.main"
+        }, {
+          title: "Saídas",
+          value: totalSaidas,
+          icon: <ArrowUpwardRoundedIcon />,
+          color: "error.main"
+        }, {
+          title: "Saldo",
+          value: saldo,
+          icon: <AccountBalanceWalletOutlinedIcon />,
+          color: "primary.main"
+        }].map((item) => (
+          <Paper
+            key={item.title}
+            elevation={0}
+            sx={(t) => ({
+              flex: 1,
+              borderRadius: 2,
+              p: 4,
+              border: `1px solid ${t.palette.divider}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "background.paper",
+            })}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box
+                sx={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 2,
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: (t) => alpha(t.palette[item.color.split(".")[0]].main, 0.1),
+                  color: item.color,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Stack>
+                <Typography fontWeight={700}>{item.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  R$ {item.value.toFixed(2)}
+                </Typography>
+              </Stack>
             </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={(t) => ({
-            flex: 1,
-            borderRadius: 2,
-            p: 4,
-            border: `1px solid ${t.palette.divider}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: 'background.paper',
-          })}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box
-              sx={{
-                width: 46,
-                height: 46,
-                borderRadius: 2,
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: (t) => alpha(t.palette.error.main, 0.1),
-                color: 'error.main',
-              }}
-            >
-              <ArrowUpwardRoundedIcon />
-            </Box>
-            <Stack>
-              <Typography fontWeight={700}>Saídas</Typography>
-              <Typography variant="body2" color="text.secondary">
-                R$ {totalSaidas.toFixed(2)}
-              </Typography>
-            </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={(t) => ({
-            flex: 1,
-            borderRadius: 2,
-            p: 4,
-            border: `1px solid ${t.palette.divider}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: 'background.paper',
-          })}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box
-              sx={{
-                width: 46,
-                height: 46,
-                borderRadius: 2,
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                color: 'primary.main',
-              }}
-            >
-              <AccountBalanceWalletOutlinedIcon />
-            </Box>
-            <Stack>
-              <Typography fontWeight={700}>Saldo</Typography>
-              <Typography variant="body2" color="text.secondary">
-                R$ {saldo.toFixed(2)}
-              </Typography>
-            </Stack>
-          </Stack>
-        </Paper>
+          </Paper>
+        ))}
       </Stack>
 
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={{ xs: 2.5, md: 3 }}>
+      {/* Cards principais */}
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={{ xs: 2.5, md: 3 }}>
         {/* Atividades */}
         <SectionCard
           title="Atividades"
           icon={<AssignmentRoundedIcon />}
           count={tasks.length}
-          action={
-            <SoftButton onClick={() => setOpenTask(true)} startIcon={<AddRoundedIcon />}>
-              Adicionar
-            </SoftButton>
-          }
+          action={<SoftButton onClick={() => setOpenTask(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
         >
           <Stack spacing={0.5}>
-            {visibleTasks.map((t, i) => (
-              <ListRow key={i} title={t.title} subtitle={t.date} />
+            {tasks.slice(0, 4).map((t, i) => (
+              <ListRow key={i} title={t.descricao ?? "Sem descrição"} subtitle={t.data_agendamento ? new Date(t.data_agendamento).toLocaleString("pt-BR") : "Sem data"} />
             ))}
-            {tasks.length > 4 && (
-              <Button
-                variant="text"
-                size="small"
-                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
-                onClick={() => nav('/tarefas')}
-              >
-                Ver mais
-              </Button>
-            )}
           </Stack>
         </SectionCard>
 
+        {/* Carros */}
         <SectionCard
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
           count={cars.length}
-          action={
-            <SoftButton onClick={() => setOpenCar(true)} startIcon={<AddRoundedIcon />}>
-              Adicionar
-            </SoftButton>
-          }
+          action={<SoftButton onClick={() => setOpenCar(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
         >
           <Stack spacing={0.5}>
-            {visibleCars.map((c, i) => (
-              <ListRow key={i} title={c} />
+            {cars.slice(0, 4).map((v, i) => (
+              <ListRow key={i} title={`${v.marca} ${v.modelo} - ${v.ano}`} subtitle={v.placa} />
             ))}
-            {cars.length > 4 && (
-              <Button
-                variant="text"
-                size="small"
-                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
-                onClick={() => nav('/carros')}
-              >
-                Ver mais
-              </Button>
-            )}
           </Stack>
         </SectionCard>
 
+        {/* Clientes */}
         <SectionCard
           title="Clientes"
           icon={<PersonOutlineIcon />}
           count={clients.length}
-          action={
-            <SoftButton onClick={() => setOpenClient(true)} startIcon={<AddRoundedIcon />}>
-              Adicionar
-            </SoftButton>
-          }
+          action={<SoftButton onClick={() => setOpenClient(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
         >
           <Stack spacing={0.5}>
-            {visibleClients.map((c, i) => (
-              <ListRow key={i} title={c} />
+            {clients.slice(0, 4).map((c, i) => (
+              <ListRow key={i} title={c.nome} subtitle={c.telefone ?? ""} />
             ))}
-            {clients.length > 4 && (
-              <Button
-                variant="text"
-                size="small"
-                sx={{ mt: 1, alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
-                onClick={() => nav('/clientes')}
-              >
-                Ver mais
-              </Button>
-            )}
           </Stack>
         </SectionCard>
       </Stack>
 
+      {/* Dialogs */}
       <DialogAgendamento
         open={openTask}
         onClose={() => setOpenTask(false)}
-        onCreate={(data) => {
-          if (!data) return;
-          const newTask = {
-            title: data.title,
-            date: data.dateTime
-              ? data.dateTime.format('DD/MM/YYYY [às] HH:mm')
-              : 'Sem data definida',
-          };
-          setTasks((prev) => [newTask, ...prev]);
-          setOpenTask(false);
+        onCreate={async (data) => {
+          try {
+            const res = await api.post("/ordens", data);
+            setTasks((prev) => [res.data, ...prev]);
+            setOpenTask(false);
+          } catch (err) {
+            console.error("Erro ao criar tarefa:", err);
+          }
         }}
       />
 
       <DialogCarro
         open={openCar}
         onClose={() => setOpenCar(false)}
-        onCreate={(data) => {
-          if (!data) return;
-          const newCar = `${data.brand} ${data.model} - ${data.year}`;
-          setCars((prev) => [newCar, ...prev]);
-          setOpenCar(false);
+        onCreate={async (data) => {
+          try {
+            const res = await api.post("/veiculos", data);
+            setCars((prev) => [res.data, ...prev]);
+            setOpenCar(false);
+          } catch (err) {
+            console.error("Erro ao criar carro:", err);
+          }
+        }}
+      />
+
+      <DialogCliente
+        open={openClient}
+        onClose={() => setOpenClient(false)}
+        onCreate={async (data) => {
+          try {
+            const res = await api.post("/clientes", data);
+            setClients((prev) => [res.data, ...prev]);
+            setOpenClient(false);
+          } catch (err) {
+            console.error("Erro ao criar cliente:", err);
+          }
         }}
       />
     </Box>

@@ -22,9 +22,6 @@ import ClientDialog, { type Client, type ClientForm } from "../dialog";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../api/api";
 
-// ==============================
-// API functions
-// ==============================
 async function listarClientes(): Promise<Client[]> {
   const { data } = await api.get("/clientes");
   return data.map((c: any) => ({
@@ -33,9 +30,7 @@ async function listarClientes(): Promise<Client[]> {
     email: c.email,
     phone: c.telefone,
     notes: c.observacao,
-    birthDate: c.data_nascimento
-      ? new Date(c.data_nascimento).toISOString()
-      : undefined,
+    birthDate: c.data_nascimento ? new Date(c.data_nascimento) : undefined,
     plan:
       c.status === "ativo"
         ? "Permanent"
@@ -52,19 +47,17 @@ async function criarCliente(data: ClientForm, oficinaId: number): Promise<Client
     email: data.email,
     telefone: data.phone,
     observacao: data.notes,
-    data_nascimento: data.birthDate
-      ? new Date(data.birthDate).toISOString()
-      : null,
+    data_nascimento: data.birthDate ? data.birthDate.toISOString() : null,
     status:
       data.plan === "Permanent"
         ? "ativo"
         : data.plan === "Trial"
         ? "teste"
         : "inativo",
-    oficina_id: oficinaId,
+    oficinaId,
   };
 
-  console.log("🛰️ Enviando POST /clientes:", payload);
+  console.log("🛰️ POST /clientes", payload);
   const { data: c } = await api.post("/clientes", payload);
   return {
     id: String(c.id),
@@ -88,9 +81,7 @@ async function atualizarCliente(id: string, data: ClientForm): Promise<Client> {
     email: data.email,
     telefone: data.phone,
     observacao: data.notes,
-    data_nascimento: data.birthDate
-      ? new Date(data.birthDate).toISOString()
-      : null,
+    data_nascimento: data.birthDate ? data.birthDate.toISOString() : null,
     status:
       data.plan === "Permanent"
         ? "ativo"
@@ -118,9 +109,6 @@ async function excluirCliente(id: string): Promise<void> {
   await api.delete(`/clientes/${id}`);
 }
 
-// ==============================
-// Página principal
-// ==============================
 export default function ClientsPage() {
   const { user } = useAuth();
   const [query, setQuery] = React.useState("");
@@ -131,6 +119,8 @@ export default function ClientsPage() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [menuClientId, setMenuClientId] = React.useState<string | null>(null);
   const navigate = useNavigate();
+
+  const oficinaId = user?.oficinaId ?? 0;
 
   React.useEffect(() => {
     listarClientes()
@@ -168,7 +158,7 @@ export default function ClientsPage() {
 
   const handleDelete = () => {
     const cliente = rows.find((r) => r.id === menuClientId);
-    if (cliente && window.confirm(`Tem certeza que deseja excluir ${cliente.name}?`)) {
+    if (cliente && window.confirm(`Excluir ${cliente.name}?`)) {
       onDelete(cliente.id);
     }
     handleMenuClose();
@@ -177,14 +167,13 @@ export default function ClientsPage() {
   const onSubmit = async (data: ClientForm) => {
     try {
       if (mode === "create") {
-        if (!user?.oficinaId) {
+        if (!oficinaId) {
           console.error("❌ Usuário logado sem oficinaId:", user);
           alert("Usuário sem oficina vinculada. Faça login novamente.");
           return;
         }
 
-        console.log("➡️ Criando cliente com oficina_id =", user.oficinaId);
-        const novo = await criarCliente(data, user.oficinaId);
+        const novo = await criarCliente(data, oficinaId);
         setRows((p) => [novo, ...p]);
         setOpenDialog(false);
         return;
@@ -223,7 +212,6 @@ export default function ClientsPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      {/* Header */}
       <Stack
         direction="row"
         alignItems="center"
@@ -272,7 +260,6 @@ export default function ClientsPage() {
         </Stack>
       </Stack>
 
-      {/* Lista de clientes */}
       <Stack spacing={1.5}>
         {filtered.length === 0 ? (
           <Paper
@@ -343,7 +330,6 @@ export default function ClientsPage() {
         )}
       </Stack>
 
-      {/* Menu global */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -355,7 +341,6 @@ export default function ClientsPage() {
         <MenuItem onClick={handleDelete}>Excluir</MenuItem>
       </Menu>
 
-      {/* Diálogo */}
       <ClientDialog
         open={openDialog}
         mode={mode}

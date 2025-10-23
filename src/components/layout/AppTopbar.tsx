@@ -51,7 +51,6 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
       }}
     >
       <Toolbar sx={{ minHeight: 72, px: 3 }}>
-        {/* 🧠 Saudação + barra de pesquisa */}
         <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
           <Box sx={{ display: "flex", alignItems: "flex-start", flexDirection: "column" }}>
             <Typography variant="h6" sx={{ fontWeight: 500 }}>
@@ -82,8 +81,6 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
             />
           </Paper>
         </Box>
-
-        {/* 🔔 Notificações + Usuário */}
         <Stack
           direction="row"
           alignItems="center"
@@ -101,8 +98,6 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
           >
             <NotificationsRoundedIcon sx={{ color: "grey.800" }} />
           </IconButton>
-
-          {/* Menu do usuário */}
           <Paper
             variant="outlined"
             onClick={handleMenuOpen}

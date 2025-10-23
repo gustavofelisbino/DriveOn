@@ -1,240 +1,87 @@
-import * as React from 'react';
+import * as React from "react";
 import {
-  Box, Stack, Paper, Typography, TextField, InputAdornment, Button,
-  IconButton, Chip, Divider, Menu, MenuItem
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import CircleIcon from '@mui/icons-material/Circle';
-import dayjs from 'dayjs';
-import 'dayjs/locale/pt-br';
-import TaskDialog from '../dialog';
-dayjs.locale('pt-br');
+  Box, Stack, Typography, Button, TextField, InputAdornment, Paper,
+  Chip, IconButton, Menu, MenuItem, Divider
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import { useNavigate } from "react-router-dom";
+import {
+  listarOrdens,
+  excluirOrdem,
+  criarOrdem,
+  atualizarOrdem
+} from "../api/api";
+import OrdemDialog from "../dialog";
 
-type Task = {
-  id: number;
-  titulo: string;
-  descricao?: string;
-  prioridade: 'baixa' | 'media' | 'alta';
-  status: 'pendente' | 'em_andamento' | 'concluida' | 'cancelada';
-  venceEm?: string;
-  ordemServico?: string;
-  cliente?: string;
-};
+export default function OrdensPage() {
+  const navigate = useNavigate();
+  const [rows, setRows] = React.useState<any[]>([]);
+  const [query, setQuery] = React.useState("");
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [mode, setMode] = React.useState<"create" | "edit">("create");
+  const [current, setCurrent] = React.useState<any | null>(null);
 
-const mockTasks: Task[] = [
-  { id: 1, titulo: 'Troca de óleo - Civic 2009', prioridade: 'media', status: 'pendente', venceEm: '2025-10-25', ordemServico: '#145', cliente: 'João Silva' },
-  { id: 2, titulo: 'Revisão completa - Peugeot 208', prioridade: 'alta', status: 'em_andamento', venceEm: '2025-10-20', ordemServico: '#141', cliente: 'Maria Santos' },
-  { id: 3, titulo: 'Troca de pastilhas de freio', prioridade: 'baixa', status: 'concluida', venceEm: '2025-10-10', ordemServico: '#139', cliente: 'Pedro Costa' },
-];
+  React.useEffect(() => {
+    listarOrdens().then(setRows).catch(console.error);
+  }, []);
 
-function StatusChip({ status }: { status: Task['status'] }) {
-  const map = {
-    pendente: { color: 'warning.main', label: 'Pendente' },
-    em_andamento: { color: 'info.main', label: 'Em andamento' },
-    concluida: { color: 'success.main', label: 'Concluída' },
-    cancelada: { color: 'error.main', label: 'Cancelada' },
-  } as const;
-  const cfg = map[status];
-  return (
-    <Chip
-      size="small"
-      label={
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <CircleIcon sx={{ fontSize: 8, color: cfg.color }} />
-          <span>{cfg.label}</span>
-        </Stack>
-      }
-      sx={{
-        height: 24,
-        borderRadius: 999,
-        bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
-        '& .MuiChip-label': { px: 1 },
-      }}
-    />
+  const handleCreate = () => {
+    setMode("create");
+    setCurrent(null);
+    setOpenDialog(true);
+  };
+
+  const handleEdit = (os: any) => {
+    setMode("edit");
+    setCurrent(os);
+    setOpenDialog(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    await excluirOrdem(id);
+    setRows((p) => p.filter((x) => x.id !== id));
+  };
+
+  const handleSubmit = async (data: any) => {
+    if (mode === "create") {
+      const nova = await criarOrdem(data);
+      setRows((p) => [nova, ...p]);
+    } else if (current) {
+      const atualizada = await atualizarOrdem(current.id, data);
+      setRows((p) => p.map((x) => (x.id === current.id ? atualizada : x)));
+    }
+  };
+
+  const filtered = rows.filter((r) =>
+    query
+      ? r.cliente?.nome?.toLowerCase().includes(query.toLowerCase()) ||
+        r.veiculo?.placa?.toLowerCase().includes(query.toLowerCase())
+      : true
   );
-}
-
-function PriorityChip({ p }: { p: Task['prioridade'] }) {
-  const map = {
-    baixa: { color: 'success.main', label: 'Baixa' },
-    media: { color: 'warning.main', label: 'Média' },
-    alta: { color: 'error.main', label: 'Alta' },
-  } as const;
-  const cfg = map[p];
-  return (
-    <Chip
-      size="small"
-      label={cfg.label}
-      sx={{
-        height: 24,
-        borderRadius: 999,
-        bgcolor: (t) => alpha((t.palette as any)[cfg.color.split('.')[0]].main, 0.08),
-        color: cfg.color,
-        fontWeight: 700,
-      }}
-    />
-  );
-}
-
-function TaskCard({
-  task,
-  onEdit,
-  onComplete,
-  onDelete,
-}: {
-  task: Task;
-  onEdit: (task: Task) => void;
-  onComplete: (id: number) => void;
-  onDelete: (id: number) => void;
-}) {
-  const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchor);
-  const vencida = task.venceEm && dayjs(task.venceEm).isBefore(dayjs());
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: (t) => `1px solid ${t.palette.divider}`,
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" fontWeight={700} noWrap>
-            {task.titulo}
+    <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+        <Stack>
+          <Typography variant="h5" fontWeight={700}>Ordens de Serviço</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Gerencie as ordens cadastradas na oficina
           </Typography>
-          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ color: 'text.secondary' }}>
-            <AccessTimeRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
-            <Typography variant="caption" color={vencida ? 'error.main' : 'text.secondary'}>
-              {task.venceEm ? dayjs(task.venceEm).format('DD/MM/YYYY') : 'Sem vencimento'}
-            </Typography>
-            <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {task.ordemServico ?? '—'} • {task.cliente ?? '—'}
-            </Typography>
-          </Stack>
-        </Box>
-
-        <Stack direction="row" spacing={1.25} alignItems="center">
-          <PriorityChip p={task.prioridade} />
-          <StatusChip status={task.status} />
-        </Stack>
-
-        <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
-          <MoreVertRoundedIcon />
-        </IconButton>
-        <Menu
-          anchorEl={anchor}
-          open={open}
-          onClose={() => setAnchor(null)}
-          PaperProps={{
-            sx: { mt: 1, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` },
-          }}
-        >
-          <MenuItem onClick={() => { setAnchor(null); onEdit(task); }}>Editar</MenuItem>
-          <MenuItem onClick={() => { setAnchor(null); onComplete(task.id); }}>Marcar como concluída</MenuItem>
-          <Divider />
-          <MenuItem onClick={() => { setAnchor(null); onDelete(task.id); }} sx={{ color: 'error.main' }}>
-            Excluir
-          </MenuItem>
-        </Menu>
-      </Stack>
-    </Paper>
-  );
-}
-
-export default function TasksPage() {
-  const [tasks, setTasks] = React.useState<Task[]>(mockTasks);
-  const [query, setQuery] = React.useState('');
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [dialogMode, setDialogMode] = React.useState<'create' | 'edit'>('create');
-  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
-
-  const filtered = tasks.filter((t) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      t.titulo.toLowerCase().includes(q) ||
-      t.cliente?.toLowerCase().includes(q) ||
-      t.ordemServico?.toLowerCase().includes(q)
-    );
-  });
-
-  const handleAdd = () => {
-    setDialogMode('create');
-    setSelectedTask(null);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (task: Task) => {
-    setDialogMode('edit');
-    setSelectedTask(task);
-    setDialogOpen(true);
-  };
-
-  const handleComplete = (id: number) =>
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: 'concluida' } : t))
-    );
-
-  const handleDelete = (id: number) =>
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-
-  const handleCreate = (dto: any) => {
-    const newTask: Task = {
-      id: tasks.length + 1,
-      titulo: dto.titulo,
-      descricao: dto.descricao,
-      prioridade: dto.prioridade,
-      status: 'pendente',
-      venceEm: dto.venceEm,
-      cliente: 'Novo cliente',
-      ordemServico: '#999',
-    };
-    setTasks((prev) => [newTask, ...prev]);
-  };
-
-  const handleUpdate = (dto: any) => {
-    if (!selectedTask) return;
-    setTasks((prev) =>
-      prev.map((t) => (t.id === selectedTask.id ? { ...t, ...dto } : t))
-    );
-  };
-
-  return (
-    <Box
-      sx={{
-        maxWidth: 1400,
-        mx: 'auto',
-        px: { xs: 2, sm: 3, md: 4 },
-        py: { xs: 3, md: 4 },
-      }}
-    >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Tarefas</Typography>
-          <Typography variant="body2" color="text.secondary">Gerencie as tarefas da sua oficina</Typography>
         </Stack>
 
         <Stack direction="row" spacing={1.5}>
           <TextField
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Pesquisar tarefas"
+            placeholder="Pesquisar por cliente ou placa"
             size="small"
             sx={{
-              minWidth: 300,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: 'background.paper',
-              },
+              minWidth: 280,
+              "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" },
             }}
             InputProps={{
               startAdornment: (
@@ -244,67 +91,109 @@ export default function TasksPage() {
               ),
             }}
           />
-          <Button
-            variant="contained"
-            startIcon={<AddRoundedIcon />}
-            onClick={handleAdd}
-            sx={{ borderRadius: 2 }}
-          >
-            Nova tarefa
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={handleCreate}>
+            Nova Ordem
           </Button>
         </Stack>
       </Stack>
 
-      {filtered.length === 0 ? (
-        <Paper
-          variant="outlined"
-          sx={{
-            borderRadius: 2,
-            p: 5,
-            textAlign: 'center',
-            bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
-          }}
-        >
-          <Typography fontWeight={600}>Nenhuma tarefa encontrada</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Ajuste a pesquisa ou adicione uma nova tarefa.
-          </Typography>
-        </Paper>
-      ) : (
-        <Stack spacing={1.25}>
-          {filtered.map((t) => (
-            <TaskCard
-              key={t.id}
-              task={t}
+      <Stack spacing={1.5}>
+        {filtered.length === 0 ? (
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              p: 5,
+              textAlign: "center",
+              bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
+            }}
+          >
+            <Typography fontWeight={600}>Nenhuma OS encontrada</Typography>
+          </Paper>
+        ) : (
+          filtered.map((os) => (
+            <OrdemCard
+              key={os.id}
+              os={os}
               onEdit={handleEdit}
-              onComplete={handleComplete}
               onDelete={handleDelete}
+              onView={() => navigate(`/ordens/${os.id}`)}
             />
-          ))}
-        </Stack>
-      )}
+          ))
+        )}
+      </Stack>
 
-      <TaskDialog
-        open={dialogOpen}
-        mode={dialogMode}
-        detail={
-          selectedTask
-            ? {
-                id: selectedTask.id,
-                titulo: selectedTask.titulo,
-                descricao: selectedTask.descricao,
-                prioridade: selectedTask.prioridade,
-                status: selectedTask.status,
-                venceEm: selectedTask.venceEm,
-                ordemServicoId: selectedTask.ordemServico ? 1 : undefined,
-                clienteId: selectedTask.cliente ? 1 : undefined,
-              }
-            : undefined
-        }
-        onClose={() => setDialogOpen(false)}
-        onCreate={handleCreate}
-        onUpdate={handleUpdate}
+      <OrdemDialog
+        open={openDialog}
+        mode={mode}
+        initial={current}
+        onClose={() => setOpenDialog(false)}
+        onSubmit={handleSubmit}
       />
     </Box>
+  );
+}
+
+function OrdemCard({ os, onEdit, onDelete, onView }: any) {
+  const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchor);
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: (t) => `1px solid ${t.palette.divider}`,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <AssignmentRoundedIcon color="primary" />
+        <Box>
+          <Typography fontWeight={700}>
+            {os.veiculo?.placa ?? "Sem veículo"} — {os.cliente?.nome ?? "Sem cliente"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Funcionário: {os.funcionario?.nome ?? "—"} • Total: R$ {os.valor_total}
+          </Typography>
+        </Box>
+      </Stack>
+
+      <Stack direction="row" spacing={1.5} alignItems="center">
+        <Chip
+          label={os.status}
+          size="small"
+          sx={{ textTransform: "capitalize", fontWeight: 600 }}
+          color={
+            os.status === "concluida"
+              ? "success"
+              : os.status === "em_andamento"
+              ? "info"
+              : os.status === "cancelada"
+              ? "error"
+              : "warning"
+          }
+        />
+        <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
+          <MoreVertRoundedIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchor}
+          open={open}
+          onClose={() => setAnchor(null)}
+          PaperProps={{ sx: { borderRadius: 2 } }}
+        >
+          <MenuItem onClick={() => { setAnchor(null); onView(); }}>Visualizar</MenuItem>
+          <MenuItem onClick={() => { setAnchor(null); onEdit(os); }}>Editar</MenuItem>
+          <Divider />
+          <MenuItem onClick={() => { setAnchor(null); onDelete(os.id); }} sx={{ color: "error.main" }}>
+            Excluir
+          </MenuItem>
+        </Menu>
+      </Stack>
+    </Paper>
   );
 }

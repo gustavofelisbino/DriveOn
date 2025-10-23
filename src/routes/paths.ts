@@ -23,4 +23,6 @@ export const paths = {
     veiculos: '/veiculos',
     estoque: '/estoque',
     fornecedores: '/fornecedores',
+    servicos: '/servicos',
+    ordemServicoDetalhes: '/ordens/:id',
   } as const;

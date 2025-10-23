@@ -81,7 +81,6 @@ export default function ClientDetails() {
         />
       </Stack>
 
-      {/* Tabs */}
       <Tabs
         value={tab}
         onChange={(_, v) => setTab(v)}

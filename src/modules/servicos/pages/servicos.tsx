@@ -1,7 +1,26 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment,
-  Button, Paper, IconButton, Menu, MenuItem, Divider
+  Box,
+  Stack,
+  Typography,
+  TextField,
+  InputAdornment,
+  Button,
+  Paper,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Fade,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -25,11 +44,17 @@ export default function ServicosPage() {
   const [mode, setMode] = React.useState<"create" | "edit">("create");
   const [current, setCurrent] = React.useState<Servico | null>(null);
   const [rows, setRows] = React.useState<Servico[]>([]);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [menuId, setMenuId] = React.useState<number | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   React.useEffect(() => {
     listarServicos()
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar serviços:", err));
+      .catch((err) => console.error("Erro ao carregar serviços:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   const openCreate = () => {
@@ -44,14 +69,40 @@ export default function ServicosPage() {
     setOpenDialog(true);
   };
 
+  const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+    setAnchorEl(e.currentTarget);
+    setMenuId(id);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuId(null);
+  };
+
+  const handleEdit = () => {
+    const s = rows.find((r) => r.id === menuId);
+    if (s) openEdit(s);
+    handleMenuClose();
+  };
+
+  const handleDelete = async () => {
+    if (!menuId) return;
+    if (window.confirm("Excluir este serviço?")) {
+      await onDelete(menuId);
+    }
+    handleMenuClose();
+  };
+
   const onSubmit = async (data: ServicoForm) => {
     try {
-      if (!user?.oficinaId) {
+      if (!user?.oficinaId && !user?.oficina_id) {
         alert("Usuário sem oficina vinculada.");
         return;
       }
+      const oficinaId = user.oficinaId ?? user.oficina_id;
+
       if (mode === "create") {
-        const novo = await criarServico(data, user.oficinaId);
+        const novo = await criarServico(data, oficinaId);
         setRows((p) => [novo, ...p]);
       } else if (current) {
         const atualizado = await atualizarServico(current.id, data);
@@ -82,11 +133,23 @@ export default function ServicosPage() {
     );
   });
 
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  if (loading)
+    return (
+      <Box sx={{ textAlign: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      {/* Header */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
         <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Serviços</Typography>
+          <Typography variant="h5" fontWeight={700}>
+            Serviços
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Gerencie os serviços disponíveis na sua oficina
           </Typography>
@@ -99,7 +162,11 @@ export default function ServicosPage() {
             size="small"
             sx={{
               minWidth: 300,
-              "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 999,
+                bgcolor: "background.paper",
+                px: 1,
+              },
             }}
             InputProps={{
               startAdornment: (
@@ -109,35 +176,120 @@ export default function ServicosPage() {
               ),
             }}
           />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} sx={{ borderRadius: 2 }}>
-            Novo serviço
+          <Button
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            onClick={openCreate}
+            sx={{
+              borderRadius: 999,
+              textTransform: "none",
+              px: 2.5,
+            }}
+          >
+            Novo Serviço
           </Button>
         </Stack>
       </Stack>
 
-      <Stack spacing={1.5}>
-        {filtered.length === 0 ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 5,
-              textAlign: "center",
-              bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
-            }}
-          >
-            <Typography fontWeight={600}>Nenhum serviço encontrado</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ajuste a pesquisa ou cadastre um novo serviço.
-            </Typography>
-          </Paper>
-        ) : (
-          filtered.map((s) => (
-            <ServicoCard key={s.id} s={s} onEdit={openEdit} onDelete={onDelete} />
-          ))
-        )}
-      </Stack>
+      {/* Tabela */}
+      <Fade in timeout={400}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 2,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            minHeight: 400,
+            maxHeight: 640,
+            overflowY: "auto",
+          }}
+        >
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>Serviço</TableCell>
+                <TableCell>Descrição</TableCell>
+                <TableCell>Preço</TableCell>
+                <TableCell align="right">Ações</TableCell>
+              </TableRow>
+            </TableHead>
 
+            <TableBody>
+              {paginated.length > 0 ? (
+                paginated.map((s) => (
+                  <TableRow key={s.id} hover>
+                    <TableCell sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 32, height: 32 }}>
+                        <BuildRoundedIcon fontSize="small" />
+                      </Avatar>
+                      {s.nome}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      {s.descricao || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <PaidRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
+                        R$ {Number(s.preco).toFixed(2)}
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={(e) => handleMenuOpen(e, s.id)}>
+                        <MoreVertRoundedIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                    Nenhum serviço encontrado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Fade>
+
+      {/* Paginação */}
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 20]}
+        labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+        }
+        sx={{
+          mt: 1.5,
+          borderRadius: 2,
+          bgcolor: "background.paper",
+        }}
+      />
+
+      {/* Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={handleEdit}>Editar</MenuItem>
+        <Divider />
+        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+          Excluir
+        </MenuItem>
+      </Menu>
+
+      {/* Dialog */}
       <ServicoDialog
         open={openDialog}
         mode={mode}
@@ -147,65 +299,5 @@ export default function ServicosPage() {
         onDelete={(s) => onDelete(s.id)}
       />
     </Box>
-  );
-}
-
-function ServicoCard({
-  s,
-  onEdit,
-  onDelete,
-}: {
-  s: Servico;
-  onEdit: (s: Servico) => void;
-  onDelete: (id: number) => void;
-}) {
-  const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchor);
-
-  return (
-    <Paper
-      elevation={0}
-      sx={(t) => ({
-        p: 2,
-        borderRadius: 2,
-        border: `1px solid ${t.palette.divider}`,
-        bgcolor: "background.paper",
-      })}
-    >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
-          <BuildRoundedIcon color="primary" />
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" fontWeight={700} noWrap>
-              {s.nome}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {s.descricao || "Sem descrição"}
-            </Typography>
-          </Box>
-        </Stack>
-        <Stack direction="row" alignItems="center" spacing={3}>
-          <Stack spacing={0} alignItems="flex-end">
-            <Typography variant="body2" color="text.secondary">Preço</Typography>
-            <Typography variant="subtitle2" color="success.main">R$ {Number(s.preco).toFixed(2)}</Typography>
-          </Stack>
-        </Stack>
-        <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
-          <MoreVertRoundedIcon />
-        </IconButton>
-        <Menu
-          anchorEl={anchor}
-          open={open}
-          onClose={() => setAnchor(null)}
-          PaperProps={{ sx: { mt: 1, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` } }}
-        >
-          <MenuItem onClick={() => { setAnchor(null); onEdit(s); }}>Editar</MenuItem>
-          <Divider />
-          <MenuItem onClick={() => { setAnchor(null); onDelete(s.id); }} sx={{ color: "error.main" }}>
-            Excluir
-          </MenuItem>
-        </Menu>
-      </Stack>
-    </Paper>
   );
 }

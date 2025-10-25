@@ -12,6 +12,15 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Fade,
+  CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -41,7 +50,7 @@ async function listarClientes(): Promise<Client[]> {
   }));
 }
 
-async function criarCliente(data: ClientForm, oficinaId: number): Promise<Client> {
+async function criarCliente(data: ClientForm, oficina_id: number): Promise<Client> {
   const payload = {
     nome: data.name,
     email: data.email,
@@ -54,10 +63,9 @@ async function criarCliente(data: ClientForm, oficinaId: number): Promise<Client
         : data.plan === "Trial"
         ? "teste"
         : "inativo",
-    oficinaId,
+    oficina_id,
   };
 
-  console.log("🛰️ POST /clientes", payload);
   const { data: c } = await api.post("/clientes", payload);
   return {
     id: String(c.id),
@@ -118,14 +126,18 @@ export default function ClientsPage() {
   const [rows, setRows] = React.useState<Client[]>([]);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [menuClientId, setMenuClientId] = React.useState<string | null>(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(true);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-  const oficinaId = user?.oficinaId ?? 0;
+  const navigate = useNavigate();
+  const oficinaId = user?.oficina_id ?? 0;
 
   React.useEffect(() => {
     listarClientes()
-      .then(setRows)
-      .catch((err) => console.error("Erro ao carregar clientes:", err));
+      .then((data) => setRows(data))
+      .catch((err) => console.error("Erro ao carregar clientes:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   const openCreate = () => {
@@ -168,18 +180,13 @@ export default function ClientsPage() {
     try {
       if (mode === "create") {
         if (!oficinaId) {
-          console.error("❌ Usuário logado sem oficinaId:", user);
           alert("Usuário sem oficina vinculada. Faça login novamente.");
           return;
         }
-
         const novo = await criarCliente(data, oficinaId);
         setRows((p) => [novo, ...p]);
         setOpenDialog(false);
-        return;
-      }
-
-      if (current) {
+      } else if (current) {
         const atualizado = await atualizarCliente(current.id, data);
         setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
         setOpenDialog(false);
@@ -210,16 +217,19 @@ export default function ClientsPage() {
     );
   });
 
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  if (loading)
+    return (
+      <Box sx={{ textAlign: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        mb={3}
-        flexWrap="wrap"
-        gap={2}
-      >
+      {/* Header */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
         <Stack spacing={0.3}>
           <Typography variant="h5" fontWeight={700}>
             Clientes
@@ -249,87 +259,116 @@ export default function ClientsPage() {
               ),
             }}
           />
-          <Button
-            variant="contained"
-            startIcon={<AddRoundedIcon />}
-            onClick={openCreate}
-            sx={{ borderRadius: 2 }}
-          >
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} sx={{ borderRadius: 2 }}>
             Novo Cliente
           </Button>
         </Stack>
       </Stack>
 
-      <Stack spacing={1.5}>
-        {filtered.length === 0 ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 5,
-              textAlign: "center",
-              bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
-            }}
-          >
-            <Typography fontWeight={600}>Nenhum cliente encontrado</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ajuste a pesquisa ou cadastre um novo cliente.
-            </Typography>
-          </Paper>
-        ) : (
-          filtered.map((c) => (
-            <Paper
-              key={c.id}
-              variant="outlined"
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar>{c.name[0]}</Avatar>
-                <Box>
-                  <Typography fontWeight={600}>{c.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {c.email || "—"}
-                  </Typography>
-                </Box>
-              </Stack>
+      {/* Table */}
+      <Fade in timeout={500}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 2,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            minHeight: 400,
+            maxHeight: 640,
+            overflowY: "auto",
+          }}
+        >
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nome</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Telefone</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Ações</TableCell>
+              </TableRow>
+            </TableHead>
 
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Chip
-                  label={
-                    c.plan === "Permanent"
-                      ? "Ativo"
-                      : c.plan === "Trial"
-                      ? "Em teste"
-                      : "Inativo"
-                  }
-                  size="small"
-                  sx={{
-                    borderRadius: 999,
-                    fontWeight: 600,
-                    color:
-                      c.plan === "Permanent"
-                        ? "success.main"
-                        : c.plan === "Trial"
-                        ? "warning.main"
-                        : "text.disabled",
-                    bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
-                  }}
-                />
-                <IconButton onClick={(e) => handleMenuOpen(e, c.id)}>
-                  <MoreVertRoundedIcon />
-                </IconButton>
-              </Stack>
-            </Paper>
-          ))
-        )}
-      </Stack>
+            <TableBody>
+              {paginated.length > 0 ? (
+                paginated.map((c) => (
+                  <TableRow key={c.id} hover>
+                    <TableCell sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 36, height: 36, fontSize: 15 }}>{c.name[0]}</Avatar>
+                      {c.name}
+                    </TableCell>
+                    <TableCell>{c.email || "—"}</TableCell>
+                    <TableCell>{c.phone || "—"}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={
+                          c.plan === "Permanent"
+                            ? "Ativo"
+                            : c.plan === "Trial"
+                            ? "Em teste"
+                            : "Inativo"
+                        }
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          borderRadius: 999,
+                          bgcolor:
+                            c.plan === "Permanent"
+                              ? (t) => alpha(t.palette.success.main, 0.1)
+                              : c.plan === "Trial"
+                              ? (t) => alpha(t.palette.warning.main, 0.1)
+                              : (t) => alpha(t.palette.text.disabled, 0.08),
+                          color:
+                            c.plan === "Permanent"
+                              ? "success.main"
+                              : c.plan === "Trial"
+                              ? "warning.main"
+                              : "text.disabled",
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={(e) => handleMenuOpen(e, c.id)}>
+                        <MoreVertRoundedIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                    Nenhum cliente encontrado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Fade>
 
+      {/* Paginação separada */}
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 20]}
+        labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+        }
+        sx={{
+          mt: 1.5,
+          borderRadius: 2,
+          bgcolor: "background.paper",
+        }}
+      />
+
+      {/* Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -337,10 +376,21 @@ export default function ClientsPage() {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
+        <MenuItem
+          onClick={() => {
+            if (menuClientId) navigate(`/clientes/${menuClientId}`);
+            handleMenuClose();
+          }}
+        >
+          Ver detalhes
+        </MenuItem>
         <MenuItem onClick={handleEdit}>Editar</MenuItem>
-        <MenuItem onClick={handleDelete}>Excluir</MenuItem>
+        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+          Excluir
+        </MenuItem>
       </Menu>
 
+      {/* Dialog */}
       <ClientDialog
         open={openDialog}
         mode={mode}

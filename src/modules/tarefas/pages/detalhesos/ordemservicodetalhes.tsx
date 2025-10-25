@@ -230,6 +230,12 @@ export default function OrdemServicoDetalhes() {
         >
           Editar OS
         </Button>
+        <Button
+            variant="outlined"
+            onClick={() => window.open(`${api.defaults.baseURL}/ordens/${id}/pdf`, "_blank")}
+            >
+            Imprimir OS
+        </Button>
       </Stack>
     </Box>
   );

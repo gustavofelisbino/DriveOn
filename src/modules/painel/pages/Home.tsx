@@ -22,7 +22,20 @@ import api from "../../../api/api";
 import DialogCarro from "../../veiculos/dialog/";
 import DialogAgendamento from "../../tarefas/dialog/";
 import DialogCliente from "../../clientes/dialog/";
+import { useAuth } from "../../../context/AuthContext";
 
+// ---- Tipagem auxiliar ----
+interface Payment {
+  id?: number;
+  tipo?: string;
+  tipo_pagamento?: string;
+  valor?: number;
+  valor_total?: number;
+  descricao?: string;
+  data_vencimento?: string;
+}
+
+// ---- Botão padrão suave ----
 function SoftButton(props: React.ComponentProps<typeof Button>) {
   const { sx, ...rest } = props;
   return (
@@ -49,6 +62,7 @@ function SoftButton(props: React.ComponentProps<typeof Button>) {
   );
 }
 
+// ---- Card genérico ----
 function SectionCard({
   title,
   icon,
@@ -75,7 +89,11 @@ function SectionCard({
       })}
     >
       <Stack spacing={2}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Box
               sx={{
@@ -92,7 +110,11 @@ function SectionCard({
               {icon}
             </Box>
             <Stack spacing={0.3}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight={700}
+                sx={{ fontSize: 13 }}
+              >
                 {title}
               </Typography>
               {count !== undefined && (
@@ -114,7 +136,16 @@ function SectionCard({
   );
 }
 
-function ListRow({ title, subtitle }: { title: string; subtitle?: string }) {
+// ---- Linha da lista (Atividades / Carros / Clientes) ----
+function ListRow({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+}) {
   return (
     <Stack
       direction="row"
@@ -145,41 +176,80 @@ function ListRow({ title, subtitle }: { title: string; subtitle?: string }) {
           </Typography>
         )}
       </Box>
+      {right}
     </Stack>
   );
 }
 
+// ---- Página principal ----
 export default function Home() {
+  const { user } = useAuth();
+  const oficinaId = user?.oficina_id ?? user?.oficinaId ?? 0;
+
   const [tasks, setTasks] = React.useState<any[]>([]);
   const [cars, setCars] = React.useState<any[]>([]);
   const [clients, setClients] = React.useState<any[]>([]);
+  const [payments, setPayments] = React.useState<Payment[]>([]);
   const [openTask, setOpenTask] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
   const [openClient, setOpenClient] = React.useState(false);
+
   const nav = useNavigate();
 
-  const totalEntradas = 8650;
-  const totalSaidas = 4870;
-  const saldo = totalEntradas - totalSaidas;
-
+  // ---- Carregamento inicial ----
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const [resTasks, resCars, resClients] = await Promise.all([
+        const [resTasks, resCars, resClients, resPayments] = await Promise.all([
           api.get("/ordens"),
           api.get("/veiculos"),
           api.get("/clientes"),
+          api.get("/pagamentos", { params: { oficina_id: oficinaId } }),
         ]);
+
         setTasks(resTasks.data);
         setCars(resCars.data);
         setClients(resClients.data);
+        setPayments(resPayments.data);
+
+        if (import.meta.env.DEV)
+          console.log("🔹 Pagamentos carregados:", resPayments.data);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
       }
     };
-    loadData();
-  }, []);
+    if (oficinaId) loadData();
+  }, [oficinaId]);
 
+  const tipoMap: Record<string, "entrada" | "saida" | undefined> = {
+    entrada: "entrada",
+    receita: "entrada",
+    recebimento: "entrada",
+    crédito: "entrada",
+    credito: "entrada",
+    receber: "entrada",
+    pagar: "saida",
+    saida: "saida",
+    saída: "saida",
+    despesa: "saida",
+    débito: "saida",
+    debito: "saida",
+    pagamento: "saida",
+  };
+
+
+  // ---- Cálculos financeiros ----
+  const totalEntradas = payments
+    .filter((p) => tipoMap[(p.tipo ?? p.tipo_pagamento ?? "").toLowerCase()] === "entrada")
+    .reduce((sum, p) => sum + Number(p.valor ?? p.valor_total ?? 0), 0);
+
+  const totalSaidas = payments
+    .filter((p) => tipoMap[(p.tipo ?? p.tipo_pagamento ?? "").toLowerCase()] === "saida")
+    .reduce((sum, p) => sum + Number(p.valor ?? p.valor_total ?? 0), 0);
+
+  const saldo = totalEntradas - totalSaidas;
+
+  // ---- JSX ----
   return (
     <Box
       sx={{
@@ -198,7 +268,11 @@ export default function Home() {
         spacing={{ xs: 2, sm: 0 }}
       >
         <Stack spacing={0.5}>
-          <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 24, md: 28 } }}>
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            sx={{ fontSize: { xs: 24, md: 28 } }}
+          >
             Início
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -217,22 +291,26 @@ export default function Home() {
 
       {/* Resumo financeiro */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[{
-          title: "Entradas",
-          value: totalEntradas,
-          icon: <ArrowDownwardRoundedIcon />,
-          color: "success.main"
-        }, {
-          title: "Saídas",
-          value: totalSaidas,
-          icon: <ArrowUpwardRoundedIcon />,
-          color: "error.main"
-        }, {
-          title: "Saldo",
-          value: saldo,
-          icon: <AccountBalanceWalletOutlinedIcon />,
-          color: "primary.main"
-        }].map((item) => (
+        {[
+          {
+            title: "Entradas",
+            value: totalEntradas,
+            icon: <ArrowDownwardRoundedIcon />,
+            color: "success.main",
+          },
+          {
+            title: "Saídas",
+            value: totalSaidas,
+            icon: <ArrowUpwardRoundedIcon />,
+            color: "error.main",
+          },
+          {
+            title: "Saldo",
+            value: saldo,
+            icon: <AccountBalanceWalletOutlinedIcon />,
+            color: "primary.main",
+          },
+        ].map((item) => (
           <Paper
             key={item.title}
             elevation={0}
@@ -255,7 +333,8 @@ export default function Home() {
                   borderRadius: 2,
                   display: "grid",
                   placeItems: "center",
-                  bgcolor: (t) => alpha(t.palette[item.color.split(".")[0]].main, 0.1),
+                  bgcolor: (t) =>
+                    alpha(t.palette[item.color.split(".")[0]].main, 0.1),
                   color: item.color,
                 }}
               >
@@ -273,17 +352,35 @@ export default function Home() {
       </Stack>
 
       {/* Cards principais */}
-      <Stack direction={{ xs: "column", lg: "row" }} spacing={{ xs: 2.5, md: 3 }}>
+      <Stack
+        direction={{ xs: "column", lg: "row" }}
+        spacing={{ xs: 2.5, md: 3 }}
+      >
         {/* Atividades */}
         <SectionCard
           title="Atividades"
           icon={<AssignmentRoundedIcon />}
           count={tasks.length}
-          action={<SoftButton onClick={() => setOpenTask(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
+          action={
+            <SoftButton
+              onClick={() => setOpenTask(true)}
+              startIcon={<AddRoundedIcon />}
+            >
+              Adicionar
+            </SoftButton>
+          }
         >
           <Stack spacing={0.5}>
             {tasks.slice(0, 4).map((t, i) => (
-              <ListRow key={i} title={t.descricao ?? "Sem descrição"} subtitle={t.data_agendamento ? new Date(t.data_agendamento).toLocaleString("pt-BR") : "Sem data"} />
+              <ListRow
+                key={i}
+                title={t.cliente?.nome ?? "Sem cliente"}
+                subtitle={
+                  t.data_agendamento
+                    ? new Date(t.data_agendamento).toLocaleString("pt-BR")
+                    : "Sem data"
+                }
+              />
             ))}
           </Stack>
         </SectionCard>
@@ -293,11 +390,22 @@ export default function Home() {
           title="Carros cadastrados"
           icon={<DirectionsCarRoundedIcon />}
           count={cars.length}
-          action={<SoftButton onClick={() => setOpenCar(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
+          action={
+            <SoftButton
+              onClick={() => setOpenCar(true)}
+              startIcon={<AddRoundedIcon />}
+            >
+              Adicionar
+            </SoftButton>
+          }
         >
           <Stack spacing={0.5}>
             {cars.slice(0, 4).map((v, i) => (
-              <ListRow key={i} title={`${v.marca} ${v.modelo} - ${v.ano}`} subtitle={v.placa} />
+              <ListRow
+                key={i}
+                title={`${v.marca} ${v.modelo} - ${v.ano}`}
+                subtitle={v.placa}
+              />
             ))}
           </Stack>
         </SectionCard>
@@ -307,7 +415,14 @@ export default function Home() {
           title="Clientes"
           icon={<PersonOutlineIcon />}
           count={clients.length}
-          action={<SoftButton onClick={() => setOpenClient(true)} startIcon={<AddRoundedIcon />}>Adicionar</SoftButton>}
+          action={
+            <SoftButton
+              onClick={() => setOpenClient(true)}
+              startIcon={<AddRoundedIcon />}
+            >
+              Adicionar
+            </SoftButton>
+          }
         >
           <Stack spacing={0.5}>
             {clients.slice(0, 4).map((c, i) => (

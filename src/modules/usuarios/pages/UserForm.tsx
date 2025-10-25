@@ -6,25 +6,33 @@ import {
   TextField,
   InputAdornment,
   Button,
-  Paper,
   IconButton,
+  Paper,
+  Avatar,
   Chip,
   Menu,
   MenuItem,
-  Avatar,
+  Fade,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
-import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
-import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import { useAuth } from "../../../context/AuthContext";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
 
-import FuncionarioDialog, {
-  type FuncionarioForm,
-} from "../dialog";
+import { useAuth } from "../../../context/AuthContext";
+import FuncionarioDialog, { type FuncionarioForm } from "../dialog";
 import {
   listarFuncionarios,
   criarFuncionario,
@@ -33,17 +41,23 @@ import {
 } from "../api/api";
 
 export default function FuncionariosPage() {
+  const { user } = useAuth();
   const [rows, setRows] = React.useState<Funcionario[]>([]);
   const [query, setQuery] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
   const [current, setCurrent] = React.useState<Funcionario | null>(null);
-  const { user } = useAuth();
+  const [loading, setLoading] = React.useState(true);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [menuId, setMenuId] = React.useState<number | null>(null);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   React.useEffect(() => {
     listarFuncionarios()
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar funcionários:", err));
+      .catch((err) => console.error("Erro ao carregar funcionários:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   const openCreate = () => {
@@ -58,6 +72,31 @@ export default function FuncionariosPage() {
     setOpenDialog(true);
   };
 
+  const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+    setAnchorEl(e.currentTarget);
+    setMenuId(id);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuId(null);
+  };
+
+  const handleEdit = () => {
+    const f = rows.find((r) => r.id === menuId);
+    if (f) openEdit(f);
+    handleMenuClose();
+  };
+
+  const handleDelete = async () => {
+    if (!menuId) return;
+    if (window.confirm("Tem certeza que deseja excluir este funcionário?")) {
+      await deletarFuncionario(menuId);
+      setRows((prev) => prev.filter((r) => r.id !== menuId));
+    }
+    handleMenuClose();
+  };
+
   const onSubmit = async (data: FuncionarioForm) => {
     try {
       if (mode === "create") {
@@ -65,25 +104,12 @@ export default function FuncionariosPage() {
         setRows((p) => [novo, ...p]);
       } else if (current) {
         const atualizado = await atualizarFuncionario(current.id, data);
-        setRows((p) =>
-          p.map((r) => (r.id === current.id ? atualizado : r))
-        );
+        setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
       }
       setOpenDialog(false);
     } catch (err) {
       console.error("Erro ao salvar funcionário:", err);
       alert("Erro ao salvar funcionário. Veja o console para detalhes.");
-    }
-  };
-
-  const onDelete = async (id: number) => {
-    if (!window.confirm("Tem certeza que deseja excluir este funcionário?"))
-      return;
-    try {
-      await deletarFuncionario(id);
-      setRows((p) => p.filter((x) => x.id !== id));
-    } catch (err) {
-      console.error("Erro ao excluir funcionário:", err);
     }
   };
 
@@ -97,15 +123,18 @@ export default function FuncionariosPage() {
     );
   });
 
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  if (loading)
+    return (
+      <Box sx={{ textAlign: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+
   return (
-    <Box
-      sx={{
-        maxWidth: 1400,
-        mx: "auto",
-        px: { xs: 2, sm: 3, md: 4 },
-        py: { xs: 3, md: 4 },
-      }}
-    >
+    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      {/* Header */}
       <Stack
         direction="row"
         alignItems="center"
@@ -119,9 +148,10 @@ export default function FuncionariosPage() {
             Funcionários
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gerencie os funcionários cadastrados
+            Gerencie os funcionários cadastrados na sua oficina
           </Typography>
         </Stack>
+
         <Stack direction="row" spacing={1.5}>
           <TextField
             value={query}
@@ -131,8 +161,9 @@ export default function FuncionariosPage() {
             sx={{
               minWidth: 300,
               "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
+                borderRadius: 999,
                 bgcolor: "background.paper",
+                px: 1,
               },
             }}
             InputProps={{
@@ -147,145 +178,133 @@ export default function FuncionariosPage() {
             variant="contained"
             startIcon={<AddRoundedIcon />}
             onClick={openCreate}
-            sx={{ borderRadius: 2 }}
+            sx={{
+              borderRadius: 999,
+              textTransform: "none",
+              px: 2.5,
+            }}
           >
             Novo Funcionário
           </Button>
         </Stack>
       </Stack>
 
-      <Stack spacing={1.5}>
-        {filtered.length === 0 ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 5,
-              textAlign: "center",
-              bgcolor: (t) => alpha(t.palette.primary.main, 0.02),
-            }}
-          >
-            <Typography fontWeight={600}>
-              Nenhum funcionário encontrado
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ajuste a pesquisa ou cadastre um novo funcionário.
-            </Typography>
-          </Paper>
-        ) : (
-          filtered.map((f) => (
-            <FuncionarioCard
-              key={f.id}
-              f={f}
-              onEdit={openEdit}
-              onDelete={onDelete}
-            />
-          ))
-        )}
-      </Stack>
+      {/* Tabela */}
+      <Fade in timeout={400}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 2,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            minHeight: 400,
+            maxHeight: 640,
+            overflowY: "auto",
+          }}
+        >
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nome</TableCell>
+                <TableCell>Cargo</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Telefone</TableCell>
+                <TableCell align="right">Ações</TableCell>
+              </TableRow>
+            </TableHead>
 
+            <TableBody>
+              {paginated.length > 0 ? (
+                paginated.map((f) => (
+                  <TableRow key={f.id} hover>
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Avatar sx={{ bgcolor: "primary.main", color: "white" }}>
+                          {f.nome[0].toUpperCase()}
+                        </Avatar>
+                        <Typography fontWeight={600}>{f.nome}</Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>{f.cargo ?? "—"}</TableCell>
+                    <TableCell>{f.email ?? "—"}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={f.telefone ?? "Sem telefone"}
+                        size="small"
+                        sx={{
+                          bgcolor: (t) => alpha(t.palette.text.primary, 0.06),
+                          color: "text.primary",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={(e) => handleMenuOpen(e, f.id)}>
+                        <MoreVertRoundedIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                    Nenhum funcionário encontrado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Fade>
+
+      {/* Paginação */}
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 20]}
+        labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+        }
+        sx={{
+          mt: 1.5,
+          borderRadius: 2,
+          bgcolor: "background.paper",
+        }}
+      />
+
+      {/* Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={handleEdit}>
+          <EditRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Editar
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+          <DeleteRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Excluir
+        </MenuItem>
+      </Menu>
+
+      {/* Dialog */}
       <FuncionarioDialog
         open={openDialog}
         mode={mode}
         initial={current}
         onClose={() => setOpenDialog(false)}
         onSubmit={onSubmit}
-        oficinaId={user?.oficina_id ?? 0}
-        onDelete={mode === "edit" ? (f) => onDelete(f.id) : undefined}
+        oficina_id={user?.oficina_id ?? 0}
       />
     </Box>
-  );
-}
-
-function FuncionarioCard({
-  f,
-  onEdit,
-  onDelete,
-}: {
-  f: Funcionario;
-  onEdit: (f: Funcionario) => void;
-  onDelete: (id: number) => void;
-}) {
-  const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchor);
-
-  return (
-    <Paper
-      elevation={0}
-      sx={(t) => ({
-        p: 2,
-        borderRadius: 2,
-        border: `1px solid ${t.palette.divider}`,
-        bgcolor: "background.paper",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-      })}
-    >
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={2}
-        sx={{ flex: 1, minWidth: 0 }}
-      >
-        <Avatar sx={{ bgcolor: "primary.main", color: "white" }}>
-          {f.nome[0].toUpperCase()}
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" fontWeight={700} noWrap>
-            {f.nome}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            noWrap
-          >
-            {f.cargo ?? "—"}
-          </Typography>
-        </Box>
-      </Stack>
-
-      <Stack direction="row" spacing={1.5} alignItems="center">
-        <Chip
-          label={f.telefone ?? "Sem telefone"}
-          size="small"
-          sx={{ fontWeight: 600 }}
-        />
-        <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
-          <MoreVertRoundedIcon />
-        </IconButton>
-        <Menu
-          anchorEl={anchor}
-          open={open}
-          onClose={() => setAnchor(null)}
-          PaperProps={{
-            sx: {
-              mt: 1,
-              borderRadius: 2,
-              border: (t) => `1px solid ${t.palette.divider}`,
-            },
-          }}
-        >
-          <MenuItem
-            onClick={() => {
-              setAnchor(null);
-              onEdit(f);
-            }}
-          >
-            <EditRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Editar
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setAnchor(null);
-              onDelete(f.id);
-            }}
-            sx={{ color: "error.main" }}
-          >
-            <DeleteRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Excluir
-          </MenuItem>
-        </Menu>
-      </Stack>
-    </Paper>
   );
 }

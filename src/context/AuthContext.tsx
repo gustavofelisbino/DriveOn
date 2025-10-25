@@ -6,7 +6,7 @@ type User = {
   email: string;
   nome: string;
   tipo: string;
-  oficinaId: number;
+  oficina_id: number;
 };
 
 type AuthContextType = {
@@ -29,14 +29,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return raw ? JSON.parse(raw) : null;
   });
 
+  // ✅ Normaliza o usuário retornado pelo backend
   const normalizeUser = (u: any): User => ({
     id: u.id,
     email: u.email,
     nome: u.nome,
     tipo: u.tipo,
-    oficinaId: Number(u.oficinaId ?? u.oficina_id ?? 0),
+    oficina_id: Number(u.oficina_id ?? u.oficinaId ?? 0),
   });
 
+  // ✅ Armazena token e usuário de forma persistente
   const persist = (t: string, u: User, remember: boolean) => {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem("driveon:token", t);
@@ -46,12 +48,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
   };
 
+  // ✅ Login e persistência
   const signIn = async (email: string, password: string, remember: boolean) => {
     const { data } = await api.post("/auth/login", { email, senha: password });
     const normalized = normalizeUser(data.usuario);
     persist(data.token, normalized, remember);
   };
 
+  // ✅ Logout
   const signOut = () => {
     localStorage.removeItem("driveon:token");
     localStorage.removeItem("driveon:user");
@@ -62,6 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common["Authorization"];
   };
 
+  // ✅ Garante que o header Authorization sempre exista
   if (token && !api.defaults.headers.common["Authorization"]) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }

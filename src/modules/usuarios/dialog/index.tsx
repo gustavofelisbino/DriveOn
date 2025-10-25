@@ -38,14 +38,14 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: FuncionarioForm) => void;
-  oficinaId: number;
+  oficina_id: number;
 };
 
 export default function FuncionarioDialog({
   open,
   onClose,
   onSubmit,
-  oficinaId,
+  oficina_id,
 }: Props) {
   const [form, setForm] = React.useState<FuncionarioForm>({
     nome: "",
@@ -54,7 +54,7 @@ export default function FuncionarioDialog({
     cargo: "Mecanico",
     senha: "",
     data_contratacao: new Date().toISOString(),
-    oficina_id: oficinaId,
+    oficina_id,
   });
 
   React.useEffect(() => {
@@ -66,22 +66,22 @@ export default function FuncionarioDialog({
       cargo: "Mecanico",
       senha: "",
       data_contratacao: new Date().toISOString(),
-      oficina_id: oficinaId,
+      oficina_id,
     });
-  }, [open, oficinaId]);
+  }, [open, oficina_id]);
 
   const handleSubmit = () => {
-  if (!form.nome || !form.email || !form.telefone)
-    return alert("Preencha todos os campos obrigatórios.");
+    if (!form.nome || !form.email || !form.telefone)
+      return alert("Preencha todos os campos obrigatórios.");
 
-  const payload = {
-    ...form,
-    data_contratacao: new Date().toISOString(),
-    oficina_id: oficinaId,
-  };
+    const payload: FuncionarioForm = {
+      ...form,
+      data_contratacao: new Date().toISOString(),
+      oficina_id,
+    };
 
-  onSubmit(payload);
-  onClose();
+    onSubmit(payload);
+    onClose();
   };
 
   return (
@@ -248,11 +248,7 @@ export default function FuncionarioDialog({
         <Button onClick={onClose} variant="outlined" sx={{ borderRadius: 999 }}>
           Cancelar
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          sx={{ borderRadius: 999 }}
-        >
+        <Button onClick={handleSubmit} variant="contained" sx={{ borderRadius: 999 }}>
           Salvar
         </Button>
       </DialogActions>

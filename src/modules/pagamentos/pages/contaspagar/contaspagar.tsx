@@ -1,46 +1,52 @@
-import * as React from 'react';
-import { useState } from 'react';
+import * as React from "react";
 import {
   Box, Stack, Typography, Paper, TextField, InputAdornment, Button,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Chip,
-  TablePagination
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
-import { Controller, useForm } from 'react-hook-form';
+  TablePagination, CircularProgress
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import { Controller, useForm } from "react-hook-form";
+import api from "../../../../api/api";
+import { useAuth } from "../../../../context/AuthContext";
 
 type Conta = {
   id: number;
-  fornecedor: string;
+  cliente: string;
   descricao: string;
   valor: number;
-  vencimento: string;
-  status: 'pendente' | 'pago' | 'atrasado';
+  data_vencimento: string;
+  status: "pendente" | "pago" | "cancelado";
+  metodo?: string;
+  fornecedor?: string;
 };
 
 type FormValues = {
-  fornecedor: string;
   descricao: string;
   valor: number;
-  vencimento: string;
+  data_vencimento: string;
+  metodo: string;
+  observacao?: string;
+  clienteId: number;
 };
 
-const mockData: Conta[] = [
-  { id: 1, fornecedor: 'Auto Peças Silva', descricao: 'Pastilhas de freio', valor: 280, vencimento: '2025-01-25', status: 'pendente' },
-  { id: 2, fornecedor: 'Distribuidora Óleo Premium', descricao: 'Óleo lubrificante 20L', valor: 450, vencimento: '2025-01-20', status: 'atrasado' },
-  { id: 3, fornecedor: 'Ferramentas & Cia', descricao: 'Jogo de chaves', valor: 320, vencimento: '2025-01-15', status: 'pago' },
-  { id: 4, fornecedor: 'Energia Elétrica', descricao: 'Conta de luz - Janeiro', valor: 890, vencimento: '2025-01-28', status: 'pendente' },
-];
-
-function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: (data: FormValues) => void }) {
+function NovaContaDialog({
+  open,
+  onClose,
+  onCreate,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (data: FormValues) => void;
+}) {
   const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<FormValues>({
-    mode: 'onChange',
-    defaultValues: { fornecedor: '', descricao: '', valor: 0, vencimento: '' },
+    mode: "onChange",
+    defaultValues: { descricao: "", valor: 0, data_vencimento: "", metodo: "pix" },
   });
 
   const onSubmit = (data: FormValues) => {
@@ -51,34 +57,18 @@ function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: 
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ fontWeight: 700 }}>Nova conta a pagar</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>Nova Conta a Pagar</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} mt={0.5}>
           <Controller
-            name="fornecedor"
-            control={control}
-            rules={{ required: 'Informe o fornecedor' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Fornecedor"
-                placeholder="Nome do fornecedor"
-                autoFocus
-                error={!!errors.fornecedor}
-                helperText={errors.fornecedor?.message}
-                fullWidth
-              />
-            )}
-          />
-          <Controller
             name="descricao"
             control={control}
-            rules={{ required: 'Informe a descrição' }}
+            rules={{ required: "Informe a descrição" }}
             render={({ field }) => (
               <TextField
                 {...field}
                 label="Descrição"
-                placeholder="Produto ou serviço"
+                placeholder="Serviço, fornecedor ou item"
                 error={!!errors.descricao}
                 helperText={errors.descricao?.message}
                 fullWidth
@@ -89,8 +79,8 @@ function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: 
             name="valor"
             control={control}
             rules={{
-              required: 'Informe o valor',
-              min: { value: 0.01, message: 'Valor deve ser maior que zero' },
+              required: "Informe o valor",
+              min: { value: 0.01, message: "Valor deve ser maior que zero" },
             }}
             render={({ field }) => (
               <TextField
@@ -109,19 +99,39 @@ function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: 
             )}
           />
           <Controller
-            name="vencimento"
+            name="data_vencimento"
             control={control}
-            rules={{ required: 'Informe o vencimento' }}
+            rules={{ required: "Informe o vencimento" }}
             render={({ field }) => (
               <TextField
                 {...field}
                 label="Vencimento"
                 type="date"
-                error={!!errors.vencimento}
-                helperText={errors.vencimento?.message}
+                error={!!errors.data_vencimento}
+                helperText={errors.data_vencimento?.message}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
               />
+            )}
+          />
+          <Controller
+            name="metodo"
+            control={control}
+            render={({ field }) => (
+              <TextField select {...field} label="Método de Pagamento" fullWidth>
+                <option value="pix">PIX</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="boleto">Boleto</option>
+                <option value="transferencia">Transferência</option>
+              </TextField>
+            )}
+          />
+          <Controller
+            name="observacao"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} label="Observação" multiline rows={2} fullWidth />
             )}
           />
         </Stack>
@@ -137,13 +147,30 @@ function NovaContaDialog({ open, onClose, onCreate }: { open: boolean; onClose: 
 }
 
 export default function ContasPagar() {
-  const [contas, setContas] = useState<Conta[]>(mockData);
-  const [query, setQuery] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const { user } = useAuth();
+  const [contas, setContas] = React.useState<Conta[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [query, setQuery] = React.useState("");
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [selectedId, setSelectedId] = React.useState<number | null>(null);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+
+  React.useEffect(() => {
+    if (!user?.oficina_id) return;
+    (async () => {
+      try {
+        const { data } = await api.get(`/pagamentos?oficina_id=${user.oficina_id}`);
+        const contasFiltradas = data.filter((p: any) => p.tipo === "pagar");
+        setContas(contasFiltradas);
+      } catch (err) {
+        console.error("Erro ao carregar contas:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user?.oficina_id]);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, id: number) => {
     setAnchorEl(event.currentTarget);
@@ -155,69 +182,90 @@ export default function ContasPagar() {
     setSelectedId(null);
   };
 
-  const handleMarcarPago = () => {
+  const handleMarcarPago = async () => {
     if (selectedId) {
-      setContas(contas.map(c => c.id === selectedId ? { ...c, status: 'pago' } : c));
+      try {
+        await api.put(`/pagamentos/${selectedId}`, { status: "pago" });
+        setContas((prev) =>
+          prev.map((c) => (c.id === selectedId ? { ...c, status: "pago" } : c))
+        );
+      } catch (err) {
+        console.error("Erro ao marcar pagamento:", err);
+      }
     }
     handleMenuClose();
   };
 
-  const handleCreate = (data: FormValues) => {
-    const novaConta: Conta = {
-      id: contas.length + 1,
-      fornecedor: data.fornecedor,
-      descricao: data.descricao,
-      valor: data.valor,
-      vencimento: data.vencimento,
-      status: 'pendente',
-    };
-    setContas([novaConta, ...contas]);
+  const handleCreate = async (data: FormValues) => {
+    if (!user?.oficina_id) return alert("Usuário sem oficina vinculada.");
+
+    try {
+      const { data: novo } = await api.post("/pagamentos", {
+        ...data,
+        tipo: "pagar",
+        status: "pendente",
+        oficina_id: user.oficina_id,
+        cliente_id: user.id
+      });
+      setContas((prev) => [novo, ...prev]);
+    } catch (err) {
+      console.error("Erro ao criar conta:", err);
+    }
   };
 
-  const getStatusConfig = (status: string) => {
-    const configs = {
-      pendente: { label: 'Pendente', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-      pago: { label: 'Pago', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-      atrasado: { label: 'Atrasado', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-    };
-    return configs[status as keyof typeof configs] || configs.pendente;
-  };
-
-  const filtered = contas.filter((c) =>
-    c.fornecedor.toLowerCase().includes(query.toLowerCase()) ||
-    c.descricao.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = contas.filter((c) => {
+  const desc = c.descricao?.toLowerCase() ?? "";
+  const metodo = c.metodo?.toLowerCase() ?? "";
+  const cliente = typeof c.cliente === "string" 
+  ? c.cliente.toLowerCase() 
+  : c.cliente?.nome?.toLowerCase() ?? "";
+  return desc.includes(query.toLowerCase()) || metodo.includes(query.toLowerCase()) || cliente.includes(query.toLowerCase());
+  });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const totalPendente = contas.filter(c => c.status === 'pendente').reduce((sum, c) => sum + c.valor, 0);
-  const totalPago = contas.filter(c => c.status === 'pago').reduce((sum, c) => sum + c.valor, 0);
-  const totalAtrasado = contas.filter(c => c.status === 'atrasado').reduce((sum, c) => sum + c.valor, 0);
+  const totalPendente = contas.filter((c) => c.status === "pendente").reduce((s, c) => s + Number(c.valor), 0);
+  const totalPago = contas.filter((c) => c.status === "pago").reduce((s, c) => s + Number(c.valor), 0);
+
+  if (loading)
+    return (
+      <Box sx={{ textAlign: "center", mt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2.5, md: 3 } }}>
+    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2.5, md: 3 } }}>
       {/* Header */}
       <Stack spacing={0.5} mb={3}>
         <Typography variant="h5" fontWeight={700}>Contas a Pagar</Typography>
-        <Typography variant="body2" color="text.secondary">Gerencie os pagamentos aos fornecedores</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Gerencie os pagamentos aos fornecedores
+        </Typography>
       </Stack>
 
-      {/* Cards */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
+      {/* Cards resumo */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
         {[
-          { label: 'PENDENTE', value: totalPendente, color: 'warning.main' },
-          { label: 'PAGO', value: totalPago, color: 'success.main' },
-          { label: 'ATRASADO', value: totalAtrasado, color: 'error.main' },
+          { label: "PENDENTE", value: totalPendente, color: "warning.main" },
+          { label: "PAGO", value: totalPago, color: "success.main" },
         ].map((c) => (
-          <Paper key={c.label} sx={{ flex: 1, p: 2, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{c.label}</Typography>
-            <Typography variant="h5" fontWeight={700} color={c.color}>R$ {c.value.toFixed(2)}</Typography>
+          <Paper
+            key={c.label}
+            sx={{ flex: 1, p: 2, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+              {c.label}
+            </Typography>
+            <Typography variant="h5" fontWeight={700} color={c.color}>
+              R$ {c.value.toFixed(2)}
+            </Typography>
           </Paper>
         ))}
       </Stack>
 
-      {/* Pesquisa e ações */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} mb={2.5}>
+      {/* Pesquisa */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5}>
         <TextField
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -244,52 +292,55 @@ export default function ContasPagar() {
 
       {/* Tabela */}
       <Fade in timeout={500}>
-        <TableContainer component={Paper} sx={{ borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}` }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>FORNECEDOR</TableCell>
-                <TableCell>DESCRIÇÃO</TableCell>
+                <TableCell>CLIENTE</TableCell>
                 <TableCell>VALOR</TableCell>
                 <TableCell>VENCIMENTO</TableCell>
                 <TableCell>STATUS</TableCell>
+                <TableCell>MÉTODO</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((conta) => {
-                const statusConfig = getStatusConfig(conta.status);
-                return (
-                  <TableRow key={conta.id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>{conta.fornecedor}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary', fontSize: 13 }}>{conta.descricao}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>R$ {conta.valor.toFixed(2)}</TableCell>
-                    <TableCell sx={{ fontSize: 13 }}>{new Date(conta.vencimento).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={statusConfig.label}
-                        size="small"
-                        sx={{
-                          height: 24,
-                          bgcolor: statusConfig.bg,
-                          color: statusConfig.color,
-                          fontWeight: 600,
-                          fontSize: 11,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={(e) => handleMenuClick(e, conta.id)}>
-                        <MoreVertRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {paginated.map((conta) => (
+                <TableRow key={conta.id} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                  {typeof conta.cliente === "string"
+                    ? conta.cliente
+                    : conta.cliente?.nome ?? "—"}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    R$ {Number(conta.valor).toFixed(2)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: 13 }}>
+                    {new Date(conta.data_vencimento).toLocaleDateString("pt-BR")}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={conta.status.toUpperCase()}
+                      size="small"
+                      color={
+                        conta.status === "pago"
+                          ? "success"
+                          : conta.status === "pendente"
+                          ? "warning"
+                          : "error"
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>{conta.metodo?.toUpperCase()}</TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={(e) => handleMenuClick(e, conta.id)}>
+                      <MoreVertRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
-
-          {/* Paginação traduzida */}
           <TablePagination
             component="div"
             count={filtered.length}
@@ -309,19 +360,22 @@ export default function ContasPagar() {
         </TableContainer>
       </Fade>
 
-      {/* Menu de ações */}
+      {/* Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={handleMarcarPago}>
           <CheckCircleOutlineRoundedIcon fontSize="small" sx={{ mr: 1 }} />
           Marcar como pago
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>Editar</MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleMenuClose} sx={{ color: "error.main" }}>
           Excluir
         </MenuItem>
       </Menu>
 
-      <NovaContaDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreate={handleCreate} />
+      <NovaContaDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onCreate={handleCreate}
+      />
     </Box>
   );
 }

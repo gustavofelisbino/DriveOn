@@ -3,7 +3,7 @@ import {
   Box, Stack, Typography, Paper, TextField, InputAdornment, Button,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Fade, Chip,
-  TablePagination, CircularProgress
+  TablePagination, CircularProgress, Select, MenuItem as SelectMenuItem
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -32,21 +32,29 @@ type FormValues = {
   data_vencimento: string;
   metodo: string;
   observacao?: string;
-  clienteId: number;
+  cliente_id: number;
 };
 
 function NovaContaDialog({
   open,
   onClose,
   onCreate,
+  clientes,
 }: {
   open: boolean;
   onClose: () => void;
   onCreate: (data: FormValues) => void;
+  clientes: any[];
 }) {
   const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<FormValues>({
     mode: "onChange",
-    defaultValues: { descricao: "", valor: 0, data_vencimento: "", metodo: "pix" },
+    defaultValues: { 
+      descricao: "", 
+      valor: 0, 
+      data_vencimento: "", 
+      metodo: "pix",
+      cliente_id: 0
+    },
   });
 
   const onSubmit = (data: FormValues) => {
@@ -60,6 +68,29 @@ function NovaContaDialog({
       <DialogTitle sx={{ fontWeight: 700 }}>Nova Conta a Pagar</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} mt={0.5}>
+          <Controller
+            name="cliente_id"
+            control={control}
+            rules={{ required: "Selecione um cliente", min: { value: 1, message: "Selecione um cliente" } }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                select
+                label="Cliente"
+                error={!!errors.cliente_id}
+                helperText={errors.cliente_id?.message}
+                fullWidth
+              >
+                <SelectMenuItem value={0}>Selecione um cliente</SelectMenuItem>
+                {clientes.map((cliente) => (
+                  <SelectMenuItem key={cliente.id} value={cliente.id}>
+                    {cliente.nome}
+                  </SelectMenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+
           <Controller
             name="descricao"
             control={control}
@@ -119,11 +150,11 @@ function NovaContaDialog({
             control={control}
             render={({ field }) => (
               <TextField select {...field} label="Método de Pagamento" fullWidth>
-                <option value="pix">PIX</option>
-                <option value="dinheiro">Dinheiro</option>
-                <option value="cartao">Cartão</option>
-                <option value="boleto">Boleto</option>
-                <option value="transferencia">Transferência</option>
+                <SelectMenuItem value="pix">PIX</SelectMenuItem>
+                <SelectMenuItem value="dinheiro">Dinheiro</SelectMenuItem>
+                <SelectMenuItem value="cartao">Cartão</SelectMenuItem>
+                <SelectMenuItem value="boleto">Boleto</SelectMenuItem>
+                <SelectMenuItem value="transferencia">Transferência</SelectMenuItem>
               </TextField>
             )}
           />
@@ -149,6 +180,7 @@ function NovaContaDialog({
 export default function ContasPagar() {
   const { user } = useAuth();
   const [contas, setContas] = React.useState<Conta[]>([]);
+  const [clientes, setClientes] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -161,11 +193,16 @@ export default function ContasPagar() {
     if (!user?.oficina_id) return;
     (async () => {
       try {
-        const { data } = await api.get(`/pagamentos?oficina_id=${user.oficina_id}`);
-        const contasFiltradas = data.filter((p: any) => p.tipo === "pagar");
+        // Carrega contas
+        const { data: pagamentosData } = await api.get(`/pagamentos?oficina_id=${user.oficina_id}`);
+        const contasFiltradas = pagamentosData.filter((p: any) => p.tipo === "pagar");
         setContas(contasFiltradas);
+
+        // Carrega clientes
+        const { data: clientesData } = await api.get(`/clientes?oficina_id=${user.oficina_id}`);
+        setClientes(clientesData);
       } catch (err) {
-        console.error("Erro ao carregar contas:", err);
+        console.error("Erro ao carregar dados:", err);
       } finally {
         setLoading(false);
       }
@@ -197,29 +234,46 @@ export default function ContasPagar() {
   };
 
   const handleCreate = async (data: FormValues) => {
-    if (!user?.oficina_id) return alert("Usuário sem oficina vinculada.");
+    if (!user?.oficina_id) {
+      alert("Usuário sem oficina vinculada.");
+      return;
+    }
+
+    if (!data.cliente_id || data.cliente_id === 0) {
+      alert("Selecione um cliente.");
+      return;
+    }
 
     try {
-      const { data: novo } = await api.post("/pagamentos", {
-        ...data,
+      const payload = {
+        descricao: data.descricao,
+        valor: Number(data.valor),
+        data_vencimento: data.data_vencimento,
+        metodo: data.metodo,
+        observacao: data.observacao,
         tipo: "pagar",
         status: "pendente",
         oficina_id: user.oficina_id,
-        cliente_id: user.id
-      });
+        cliente_id: Number(data.cliente_id),
+      };
+
+      console.log("Payload enviado:", payload); // Para debug
+
+      const { data: novo } = await api.post("/pagamentos", payload);
       setContas((prev) => [novo, ...prev]);
     } catch (err) {
       console.error("Erro ao criar conta:", err);
+      alert("Erro ao criar conta. Verifique os dados e tente novamente.");
     }
   };
 
   const filtered = contas.filter((c) => {
-  const desc = c.descricao?.toLowerCase() ?? "";
-  const metodo = c.metodo?.toLowerCase() ?? "";
-  const cliente = typeof c.cliente === "string" 
-  ? c.cliente.toLowerCase() 
-  : c.cliente?.nome?.toLowerCase() ?? "";
-  return desc.includes(query.toLowerCase()) || metodo.includes(query.toLowerCase()) || cliente.includes(query.toLowerCase());
+    const desc = c.descricao?.toLowerCase() ?? "";
+    const metodo = c.metodo?.toLowerCase() ?? "";
+    const cliente = typeof c.cliente === "string" 
+      ? c.cliente.toLowerCase() 
+      : c.cliente?.nome?.toLowerCase() ?? "";
+    return desc.includes(query.toLowerCase()) || metodo.includes(query.toLowerCase()) || cliente.includes(query.toLowerCase());
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -297,6 +351,7 @@ export default function ContasPagar() {
             <TableHead>
               <TableRow>
                 <TableCell>CLIENTE</TableCell>
+                <TableCell>DESCRIÇÃO</TableCell>
                 <TableCell>VALOR</TableCell>
                 <TableCell>VENCIMENTO</TableCell>
                 <TableCell>STATUS</TableCell>
@@ -308,10 +363,11 @@ export default function ContasPagar() {
               {paginated.map((conta) => (
                 <TableRow key={conta.id} hover>
                   <TableCell sx={{ fontWeight: 600 }}>
-                  {typeof conta.cliente === "string"
-                    ? conta.cliente
-                    : conta.cliente?.nome ?? "—"}
+                    {typeof conta.cliente === "string"
+                      ? conta.cliente
+                      : conta.cliente?.nome ?? "—"}
                   </TableCell>
+                  <TableCell>{conta.descricao}</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>
                     R$ {Number(conta.valor).toFixed(2)}
                   </TableCell>
@@ -375,6 +431,7 @@ export default function ContasPagar() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onCreate={handleCreate}
+        clientes={clientes}
       />
     </Box>
   );

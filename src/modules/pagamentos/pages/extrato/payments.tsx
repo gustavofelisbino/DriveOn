@@ -83,7 +83,6 @@ export default function ExtratoFinanceiro() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2.5, md: 3 } }}>
-      {/* Header */}
       <Stack spacing={0.5} mb={3}>
         <Typography variant="h5" fontWeight={700}>
           Extrato Financeiro
@@ -93,7 +92,6 @@ export default function ExtratoFinanceiro() {
         </Typography>
       </Stack>
 
-      {/* Cards */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
         {[
           { label: "ENTRADAS", valor: totalEntradas, cor: "success.main" },
@@ -114,7 +112,6 @@ export default function ExtratoFinanceiro() {
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 4,
                 bgcolor: item.cor,
               },
             }}

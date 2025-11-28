@@ -18,10 +18,10 @@ import { useAuth } from '../../../../context/AuthContext';
 
 type Agendamento = {
   id: number;
-  cliente: { nome: string } | string;
-  servico?: string;
+  cliente: string;
+  servico: string;
   data_agendamento: string;
-  horario?: string;
+  horario: string;
 };
 
 export default function RelatorioAgenda() {
@@ -31,20 +31,29 @@ export default function RelatorioAgenda() {
 
   React.useEffect(() => {
     if (!user?.oficina_id) return;
+
     (async () => {
       try {
-        const { data } = await api.get(`/ordens`, {
+        const { data } = await api.get(`/agendamentos`, {
           params: { oficina_id: user.oficina_id },
         });
 
-        // transforma os dados caso venham aninhados
-        const agendamentos = data.map((a: any) => ({
-          id: a.id,
-          cliente: a.cliente?.nome ?? a.cliente ?? '—',
-          servico: a.servico ?? a.descricao ?? '—',
-          data_agendamento: a.data_agendamento ?? a.data ?? new Date().toISOString(),
-          horario: a.horario ?? new Date(a.data_agendamento ?? a.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        }));
+        const agendamentos: Agendamento[] = data.map((a: any) => {
+          const dataAg = a.data_agendamento ?? a.data ?? new Date().toISOString();
+
+          return {
+            id: a.id,
+            cliente: a.cliente?.nome ?? a.cliente ?? '—',
+            servico: a.servico?.nome ?? a.servico ?? '—',
+            data_agendamento: dataAg,
+            horario:
+              a.horario ??
+              new Date(dataAg).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+          };
+        });
 
         setAgenda(agendamentos);
       } catch (err) {
@@ -60,10 +69,10 @@ export default function RelatorioAgenda() {
 
     const header = ['Cliente', 'Serviço', 'Data', 'Horário'];
     const rows = agenda.map((a) => [
-      typeof a.cliente === 'string' ? a.cliente : a.cliente.nome,
-      a.servico ?? '—',
+      a.cliente,
+      a.servico,
       new Date(a.data_agendamento).toLocaleDateString('pt-BR'),
-      a.horario ?? '',
+      a.horario,
     ]);
 
     const csvContent =
@@ -72,7 +81,10 @@ export default function RelatorioAgenda() {
 
     const link = document.createElement('a');
     link.setAttribute('href', encodeURI(csvContent));
-    link.setAttribute('download', `relatorio_agenda_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `relatorio_agenda_${new Date().toISOString().slice(0, 10)}.csv`
+    );
     link.click();
   };
 
@@ -85,7 +97,6 @@ export default function RelatorioAgenda() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', px: 4, py: 3 }}>
-      {/* Cabeçalho */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
         <Stack>
           <Typography variant="h5" fontWeight={700}>
@@ -95,6 +106,7 @@ export default function RelatorioAgenda() {
             Agendamentos e horários registrados
           </Typography>
         </Stack>
+
         <Button
           variant="contained"
           startIcon={<FileDownloadRoundedIcon />}
@@ -105,7 +117,6 @@ export default function RelatorioAgenda() {
         </Button>
       </Stack>
 
-      {/* Tabela */}
       <Paper variant="outlined" sx={{ borderRadius: 1 }}>
         {agenda.length ? (
           <Table>
@@ -117,12 +128,11 @@ export default function RelatorioAgenda() {
                 <TableCell>Horário</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {agenda.map((a) => (
                 <TableRow key={a.id} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>
-                    {typeof a.cliente === 'string' ? a.cliente : a.cliente.nome}
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{a.cliente}</TableCell>
                   <TableCell>{a.servico}</TableCell>
                   <TableCell>
                     {new Date(a.data_agendamento).toLocaleDateString('pt-BR')}

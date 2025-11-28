@@ -42,20 +42,20 @@ const navItems = [
   { label: 'Veículos', icon: <DirectionsCarIcon />, to: paths.veiculos },
   { label: 'Estoque', icon: <InventoryIcon />, to: paths.estoque },
   { label: 'Serviços', icon: <MiscellaneousServicesIcon />, to: paths.servicos },
-  { label: 'Tarefas pendentes', icon: <ChecklistOutlineIcon />, to: paths.tasks },
+  { label: 'Ordens de serviço', icon: <ChecklistOutlineIcon />, to: paths.tasks },
   {
-    label: 'Pagamentos',
+    label: 'Financeiro',
     icon: <PaymentsOutlineIcon />,
     to: paths.payments,
     subItems: [
-      { label: 'Pagamentos', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
-      { label: 'Contas a receber', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber },
-      { label: 'Contas a pagar', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
+      { label: 'Extrato', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
+      { label: 'Recebimentos', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber },
+      { label: 'Pagamentos', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
     ]
   },
   { label: 'Fornecedores', icon: <StoreIcon />, to: paths.fornecedores },
   { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },
-  { label: 'Usuários', icon: <PersonOutlineIcon />, to: paths.users },
+  { label: 'Funcionários', icon: <PersonOutlineIcon />, to: paths.users },
   { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },
   { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },
 ];

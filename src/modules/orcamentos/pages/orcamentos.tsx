@@ -425,14 +425,14 @@ export default function OrcamentosPage() {
 
   const aprovar = async () => {
     if (!selectedId) return;
-    await api.put(`/orcamentos/${selectedId}/aprovar`);
+    await api.patch(`/orcamentos/${selectedId}/aprovado`);
     handleMenuClose();
     fetchData();
   };
 
   const recusar = async () => {
     if (!selectedId) return;
-    await api.put(`/orcamentos/${selectedId}/recusar`);
+    await api.patch(`/orcamentos/${selectedId}/recusado`);
     handleMenuClose();
     fetchData();
   };

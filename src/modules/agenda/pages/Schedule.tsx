@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Box,
   Stack,
@@ -12,6 +12,11 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   IconButton,
   Fade,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemButton,
+  Divider,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { alpha } from '@mui/material/styles';
@@ -20,8 +25,10 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
 import TodayRoundedIcon from '@mui/icons-material/TodayRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
@@ -30,8 +37,21 @@ import { PickersDay, type PickersDayProps } from '@mui/x-date-pickers/PickersDay
 import { Controller, useForm } from 'react-hook-form';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/pt-br';
+import api from "../../../api/api";
+import { useAuth } from '../../../context/AuthContext';
+
+type Appointment = {
+  id: number;
+  title: string;
+  description?: string;
+  start: string;
+  end: string;
+  location?: string;
+  oficina_id: number;
+};
 
 type HighlightMap = Record<string, number>;
+
 type FormValues = {
   title: string;
   description?: string;
@@ -208,6 +228,105 @@ function NewAppointmentDialog({
   );
 }
 
+function AppointmentsDialog({
+  open,
+  onClose,
+  date,
+  appointments,
+  onDelete,
+}: {
+  open: boolean;
+  onClose: () => void;
+  date: Dayjs | null;
+  appointments: Appointment[];
+  onDelete: (id: number) => void;
+}) {
+  if (!date) return null;
+
+  const dayAppointments = appointments.filter((apt) =>
+    dayjs(apt.start).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
+  ).sort((a, b) => dayjs(a.start).unix() - dayjs(b.start).unix());
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        Agendamentos - {date.format('DD/MM/YYYY')}
+      </DialogTitle>
+      <DialogContent dividers>
+        {dayAppointments.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography color="text.secondary">
+              Nenhum agendamento para este dia
+            </Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {dayAppointments.map((apt, index) => (
+              <React.Fragment key={apt.id}>
+                {index > 0 && <Divider />}
+                <ListItem
+                  disablePadding
+                  secondaryAction={
+                    <IconButton 
+                      edge="end" 
+                      onClick={() => {
+                        if (window.confirm('Deseja excluir este agendamento?')) {
+                          onDelete(apt.id);
+                        }
+                      }}
+                      sx={{ color: 'error.main' }}
+                    >
+                      <DeleteRoundedIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemButton sx={{ py: 2 }}>
+                    <ListItemText
+                      primary={
+                        <Typography variant="body1" fontWeight={600}>
+                          {apt.title}
+                        </Typography>
+                      }
+                      secondary={
+                        <Stack spacing={0.5} mt={1}>
+                          {apt.description && (
+                            <Typography variant="body2" color="text.secondary">
+                              {apt.description}
+                            </Typography>
+                          )}
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <AccessTimeRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="caption" color="text.secondary">
+                                {dayjs(apt.start).format('HH:mm')} - {dayjs(apt.end).format('HH:mm')}
+                              </Typography>
+                            </Box>
+                            {apt.location && (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <LocationOnRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  {apt.location}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Stack>
+                        </Stack>
+                      }
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function EventDay(
   props: Omit<PickersDayProps, 'day'> & { day: Dayjs; highlights?: HighlightMap }
 ) {
@@ -265,26 +384,78 @@ function EventDay(
 }
 
 export default function Schedule() {
+  const { user } = useAuth();
   const [value, setValue] = useState<Dayjs | null>(dayjs());
   const [query, setQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [appointmentsDialogOpen, setAppointmentsDialogOpen] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar agendamentos
+  useEffect(() => {
+    if (!user?.oficina_id) return;
+    
+    (async () => {
+      try {
+        const { data } = await api.get(`/agendamentos?oficina_id=${user.oficina_id}`);
+        setAppointments(data);
+      } catch (error) {
+        console.error('Erro ao carregar agendamentos:', error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user?.oficina_id]);
 
   const highlights = useMemo<HighlightMap>(() => {
-    const base = [6, 8, 20, 25];
     const map: HighlightMap = {};
-    base.forEach((d) => {
-      const k = dayjs().date(d).format('YYYY-MM-DD');
-      map[k] = (map[k] ?? 0) + 1;
+    appointments.forEach((apt) => {
+      const key = dayjs(apt.start).format('YYYY-MM-DD');
+      map[key] = (map[key] ?? 0) + 1;
     });
     return map;
-  }, []);
+  }, [appointments]);
 
-  const handleCreate = (data: FormValues) => {
-    console.log('Novo agendamento:', {
-      ...data,
-      startISO: data.start?.toISOString(),
-      endISO: data.end?.toISOString(),
-    });
+  const handleCreate = async (data: FormValues) => {
+    if (!user?.oficina_id) {
+      alert('Usuário sem oficina vinculada.');
+      return;
+    }
+
+    try {
+      const payload = {
+        title: data.title,
+        description: data.description,
+        start: data.start?.toISOString(),
+        end: data.end?.toISOString(),
+        location: data.location,
+        oficina_id: user.oficina_id,
+      };
+
+      console.log('Payload enviado:', payload);
+
+      const { data: novo } = await api.post('/agendamentos', payload);
+      setAppointments((prev) => [...prev, novo]);
+    } catch (error) {
+      console.error('Erro ao criar agendamento:', error);
+      alert('Erro ao criar agendamento. Tente novamente.');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/agendamentos/${id}`);
+      setAppointments((prev) => prev.filter((apt) => apt.id !== id));
+    } catch (error) {
+      console.error('Erro ao excluir agendamento:', error);
+      alert('Erro ao excluir agendamento.');
+    }
+  };
+
+  const handleDayClick = (newValue: Dayjs | null) => {
+    setValue(newValue);
+    setAppointmentsDialogOpen(true);
   };
 
   return (
@@ -374,14 +545,7 @@ export default function Schedule() {
             }}
           />
           <Chip 
-            label="Próximos 7 dias" 
-            onClick={() => setValue(dayjs())} 
-            variant="outlined"
-            sx={{ fontWeight: 500 }}
-          />
-          <Chip 
-            label="Com eventos" 
-            variant="outlined"
+            label={`${appointments.length} agendamento(s)`}
             sx={{ fontWeight: 500 }}
           />
         </Stack>
@@ -404,7 +568,7 @@ export default function Schedule() {
           >
             <DateCalendar
               value={value}
-              onChange={setValue}
+              onChange={handleDayClick}
               views={['day']}
               sx={{
                 width: '100%',
@@ -466,6 +630,14 @@ export default function Schedule() {
         onClose={() => setDialogOpen(false)}
         onCreate={handleCreate}
         defaultStart={value ? value.hour(9).minute(0).second(0) : dayjs().hour(9).minute(0)}
+      />
+
+      <AppointmentsDialog
+        open={appointmentsDialogOpen}
+        onClose={() => setAppointmentsDialogOpen(false)}
+        date={value}
+        appointments={appointments}
+        onDelete={handleDelete}
       />
     </LocalizationProvider>
   );

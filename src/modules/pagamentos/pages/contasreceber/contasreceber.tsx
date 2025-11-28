@@ -24,7 +24,7 @@ type Conta = {
 };
 
 type FormValues = {
-  cliente_id?: number;
+  cliente_id: number;
   descricao: string;
   valor: number;
   data_vencimento: string;
@@ -44,7 +44,7 @@ function NovaContaDialog({
   const { user } = useAuth();
   const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<FormValues>({
     mode: "onChange",
-    defaultValues: { cliente_id: undefined, descricao: "", valor: 0, data_vencimento: "", metodo: "pix" },
+    defaultValues: { cliente_id: 0, descricao: "", valor: 0, data_vencimento: "", metodo: "pix" },
   });
 
   const [clientes, setClientes] = React.useState<{ id: number; nome: string }[]>([]);
@@ -78,17 +78,21 @@ function NovaContaDialog({
           <Controller
             name="cliente_id"
             control={control}
-            rules={{ required: "Selecione um cliente" }}
+            rules={{ 
+              required: "Selecione um cliente",
+              validate: (value) => value > 0 || "Selecione um cliente válido"
+            }}
             render={({ field }) => (
               <TextField
                 {...field}
                 select
+                label="Cliente"
                 error={!!errors.cliente_id}
                 helperText={errors.cliente_id?.message}
                 fullWidth
                 SelectProps={{ native: true }}
               >
-                <option value="">Selecione...</option>
+                <option value={0}>Selecione um cliente...</option>
                 {loadingClientes ? (
                   <option disabled>Carregando clientes...</option>
                 ) : clientes.length === 0 ? (
@@ -104,7 +108,6 @@ function NovaContaDialog({
             )}
           />
 
-          {/* Restante dos campos */}
           <Controller
             name="descricao"
             control={control}
@@ -120,10 +123,14 @@ function NovaContaDialog({
               />
             )}
           />
+
           <Controller
             name="valor"
             control={control}
-            rules={{ required: "Informe o valor", min: { value: 0.01, message: "Valor deve ser maior que zero" } }}
+            rules={{ 
+              required: "Informe o valor", 
+              min: { value: 0.01, message: "Valor deve ser maior que zero" } 
+            }}
             render={({ field }) => (
               <TextField
                 {...field}
@@ -140,6 +147,7 @@ function NovaContaDialog({
               />
             )}
           />
+
           <Controller
             name="data_vencimento"
             control={control}
@@ -156,6 +164,7 @@ function NovaContaDialog({
               />
             )}
           />
+
           <Controller
             name="metodo"
             control={control}
@@ -167,6 +176,20 @@ function NovaContaDialog({
                 <option value="boleto">Boleto</option>
                 <option value="transferencia">Transferência</option>
               </TextField>
+            )}
+          />
+
+          <Controller
+            name="observacao"
+            control={control}
+            render={({ field }) => (
+              <TextField 
+                {...field} 
+                label="Observação (opcional)" 
+                multiline 
+                rows={2} 
+                fullWidth 
+              />
             )}
           />
         </Stack>
@@ -208,19 +231,36 @@ export default function ContasReceber() {
   }, [user?.oficina_id]);
 
   const handleCreate = async (data: FormValues) => {
-    if (!user?.oficina_id) return alert("Usuário sem oficina vinculada.");
+    if (!user?.oficina_id) {
+      alert("Usuário sem oficina vinculada.");
+      return;
+    }
+
+    if (!data.cliente_id || data.cliente_id === 0) {
+      alert("Selecione um cliente válido.");
+      return;
+    }
 
     try {
-      const { data: novo } = await api.post("/pagamentos", {
-        ...data,
+      const payload = {
+        descricao: data.descricao,
+        valor: Number(data.valor),
+        data_vencimento: data.data_vencimento,
+        metodo: data.metodo,
+        observacao: data.observacao,
         tipo: "receber",
         status: "pendente",
         oficina_id: user.oficina_id,
-        cliente_id: user.id
-      });
+        cliente_id: Number(data.cliente_id),
+      };
+
+      console.log("Payload enviado:", payload); // Para debug
+
+      const { data: novo } = await api.post("/pagamentos", payload);
       setContas((prev) => [novo, ...prev]);
     } catch (err) {
       console.error("Erro ao criar conta:", err);
+      alert("Erro ao criar conta. Verifique os dados e tente novamente.");
     }
   };
 
@@ -233,18 +273,20 @@ export default function ContasReceber() {
         );
       } catch (err) {
         console.error("Erro ao marcar como recebido:", err);
+        alert("Erro ao marcar conta como recebida.");
       }
     }
     setAnchorEl(null);
   };
 
   const handleExcluir = async () => {
-    if (selectedId) {
+    if (selectedId && window.confirm("Tem certeza que deseja excluir esta conta?")) {
       try {
         await api.delete(`/pagamentos/${selectedId}`);
         setContas((prev) => prev.filter((c) => c.id !== selectedId));
       } catch (err) {
         console.error("Erro ao excluir conta:", err);
+        alert("Erro ao excluir conta.");
       }
     }
     setAnchorEl(null);
@@ -278,11 +320,17 @@ export default function ContasReceber() {
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[{ label: "PENDENTE", value: totalPendente, color: "warning.main" },
-          { label: "RECEBIDO", value: totalPago, color: "success.main" }].map((c) => (
+        {[
+          { label: "PENDENTE", value: totalPendente, color: "warning.main" },
+          { label: "RECEBIDO", value: totalPago, color: "success.main" }
+        ].map((c) => (
           <Paper key={c.label} sx={{ flex: 1, p: 2, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{c.label}</Typography>
-            <Typography variant="h5" fontWeight={700} color={c.color}>R$ {c.value.toFixed(2)}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+              {c.label}
+            </Typography>
+            <Typography variant="h5" fontWeight={700} color={c.color}>
+              R$ {c.value.toFixed(2)}
+            </Typography>
           </Paper>
         ))}
       </Stack>
@@ -328,28 +376,36 @@ export default function ContasReceber() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((conta) => (
-                <TableRow key={conta.id} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>
-                    {typeof conta.cliente === "string" ? conta.cliente : conta.cliente?.nome ?? "—"}
-                  </TableCell>
-                  <TableCell>{conta.descricao}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>R$ {Number(conta.valor).toFixed(2)}</TableCell>
-                  <TableCell>{new Date(conta.data_vencimento).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={conta.status === "pago" ? "Recebido" : conta.status === "pendente" ? "Pendente" : "Cancelado"}
-                      color={conta.status === "pago" ? "success" : conta.status === "pendente" ? "warning" : "error"}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setSelectedId(conta.id); }}>
-                      <MoreVertRoundedIcon fontSize="small" />
-                    </IconButton>
+              {paginated.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                    Nenhuma conta encontrada
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paginated.map((conta) => (
+                  <TableRow key={conta.id} hover>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {typeof conta.cliente === "string" ? conta.cliente : conta.cliente?.nome ?? "—"}
+                    </TableCell>
+                    <TableCell>{conta.descricao}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>R$ {Number(conta.valor).toFixed(2)}</TableCell>
+                    <TableCell>{new Date(conta.data_vencimento).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={conta.status === "pago" ? "Recebido" : conta.status === "pendente" ? "Pendente" : "Cancelado"}
+                        color={conta.status === "pago" ? "success" : conta.status === "pendente" ? "warning" : "error"}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setSelectedId(conta.id); }}>
+                        <MoreVertRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
           <TablePagination
@@ -362,6 +418,7 @@ export default function ContasReceber() {
               setRowsPerPage(parseInt(e.target.value, 10));
               setPage(0);
             }}
+            rowsPerPageOptions={[5, 10, 20]}
             labelRowsPerPage="Linhas por página:"
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
@@ -376,8 +433,8 @@ export default function ContasReceber() {
           <CheckCircleOutlineRoundedIcon fontSize="small" sx={{ mr: 1 }} />
           Marcar como recebido
         </MenuItem>
-        <MenuItem onClick={handleExcluir}
-          sx={{ color: "error.main" }}>Excluir
+        <MenuItem onClick={handleExcluir} sx={{ color: "error.main" }}>
+          Excluir
         </MenuItem>
       </Menu>
 
